@@ -55,7 +55,9 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
   max-width: 560px; margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 12px 40px;
+  /* Als App vom Home-Bildschirm liegt die Seite unter der Statusleiste: Platz dafuer lassen */
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
 }
 .screen { display: flex; flex-direction: column; gap: 14px; }
 
@@ -265,7 +267,7 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 .backdrop { position: fixed; inset: 0; background: rgba(8,6,20,.72); z-index: 20; }
 .sheet {
   position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
-  width: 100%; max-width: 560px; max-height: 92%;
+  width: 100%; max-width: 560px; max-height: min(92%, calc(100% - 16px - env(safe-area-inset-top, 0px)));
   display: flex; flex-direction: column;
   background: var(--parch); color: var(--parch-ink);
   border: 3px solid var(--ink); border-bottom: 0;
