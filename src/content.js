@@ -22,9 +22,35 @@ const TXT = {
     ],
     charlotte: [
       'Charlotte? Rieche ich hier Marie Johanna?',
-      'Charlotte? Oder eher Karl Otto?'
+      'Charlotte? Oder eher Karl Otto?',
+      'Ohje, die ist schlau, zieht euch warm an.'
+    ],
+    naunin: [
+      'Naunin? Was f\u00fcr ein edler Name.',
+      'Naunin? Das ist bestimmt ein Pfundskerl!',
+      'Naunin! Sicheeeer. Nix!',
+      'Naunin? Ey, der hei\u00dft ja wie ich!'
+    ],
+    philip: [
+      'Philip? Welcher denn? Davon gibt\u2019s doch so viele\u2026',
+      'Philip? Klingt royal!',
+      'Philip? Bleib mir weg mit dem, der hat mir das Ganze hier eingebrockt!'
+    ],
+    till: [
+      'Till? Jetzt geht\u2019s bestimmt um Geld!',
+      'Till? Sind wir hier beim Preisskat?',
+      'Till! Wie stehen die Aktien?',
+      'Till! Spielt Ludo auch mit?'
+    ],
+    matteo: [
+      'Wer hat denn den Olli-Schulz-Klon eingeladen?',
+      'Matti! Kennen wir uns nicht aus Kampen?',
+      'Matteo! Ich hab da \u2019ne Frage zu dem Fonds, den du mir verkauft hast.',
+      'Ahhh, der Herr Vermieter!'
     ]
   },
+  /* Andere Schreibweisen, die denselben Spruch bekommen */
+  nameAlias: { matti: 'matteo' },
   namesWarn: {
     few: 'Drei. Mindestens drei. Ich kann ja nicht mitspielen, so gern ich würde.',
     dup: 'Zwei Leute mit demselben Namen? Gebt euch Spitznamen. Gemeine, bitte.'

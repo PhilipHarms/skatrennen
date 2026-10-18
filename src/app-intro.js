@@ -834,17 +834,19 @@ const Intro = {
       $('#name-' + (S.draft.slots.length - 1)).focus();
     });
   },
-  /* Bestimmte Namen bekommen einen Spruch: nach kurzer Tipp-Pause oder beim Verlassen des Feldes, einmal pro Eingabe */
+  /* Bestimmte Namen bekommen einen Spruch: nach kurzer Tipp-Pause oder beim Verlassen des Feldes.
+     Kommentiert wird immer nur der oberste Name mit Spruch, und der nur einmal pro Eingabe. */
   checkNameJoke(s, now) {
     if (!s) return;
     if (!this.jokeDone) this.jokeDone = new Map();
     clearTimeout(this.jokeT);
-    const keyOf = () => (s.name || '').trim().toLowerCase();
-    const key = keyOf();
-    if (!TXT.nameJokes[key]) { this.jokeDone.delete(s.id); return; }
+    const key = jokeKeyOf(s.name);
+    if (!key) { this.jokeDone.delete(s.id); return; }
     if (this.jokeDone.get(s.id) === key) return;
     const fire = () => {
-      if (keyOf() !== key || this.jokeDone.get(s.id) === key || this.step !== 'names') return;
+      if (jokeKeyOf(s.name) !== key || this.jokeDone.get(s.id) === key || this.step !== 'names') return;
+      const top = S.draft.slots.find(x => jokeKeyOf(x.name));
+      if (!top || top.id !== s.id) return;
       this.jokeDone.set(s.id, key);
       this.say(nextNameJoke(key));
     };
@@ -977,6 +979,12 @@ const Intro = {
     startGame();
   }
 };
+
+function jokeKeyOf(name) {
+  const k = (name || '').trim().toLowerCase();
+  if (TXT.nameJokes[k]) return k;
+  return TXT.nameAlias[k] || null;
+}
 
 function nextNameJoke(key) {
   const KEY = 'naunin-skatrennen-witze';

@@ -2779,9 +2779,35 @@ const TXT = {
     ],
     charlotte: [
       'Charlotte? Rieche ich hier Marie Johanna?',
-      'Charlotte? Oder eher Karl Otto?'
+      'Charlotte? Oder eher Karl Otto?',
+      'Ohje, die ist schlau, zieht euch warm an.'
+    ],
+    naunin: [
+      'Naunin? Was f\u00fcr ein edler Name.',
+      'Naunin? Das ist bestimmt ein Pfundskerl!',
+      'Naunin! Sicheeeer. Nix!',
+      'Naunin? Ey, der hei\u00dft ja wie ich!'
+    ],
+    philip: [
+      'Philip? Welcher denn? Davon gibt\u2019s doch so viele\u2026',
+      'Philip? Klingt royal!',
+      'Philip? Bleib mir weg mit dem, der hat mir das Ganze hier eingebrockt!'
+    ],
+    till: [
+      'Till? Jetzt geht\u2019s bestimmt um Geld!',
+      'Till? Sind wir hier beim Preisskat?',
+      'Till! Wie stehen die Aktien?',
+      'Till! Spielt Ludo auch mit?'
+    ],
+    matteo: [
+      'Wer hat denn den Olli-Schulz-Klon eingeladen?',
+      'Matti! Kennen wir uns nicht aus Kampen?',
+      'Matteo! Ich hab da \u2019ne Frage zu dem Fonds, den du mir verkauft hast.',
+      'Ahhh, der Herr Vermieter!'
     ]
   },
+  /* Andere Schreibweisen, die denselben Spruch bekommen */
+  nameAlias: { matti: 'matteo' },
   namesWarn: {
     few: 'Drei. Mindestens drei. Ich kann ja nicht mitspielen, so gern ich würde.',
     dup: 'Zwei Leute mit demselben Namen? Gebt euch Spitznamen. Gemeine, bitte.'
@@ -4065,17 +4091,19 @@ const Intro = {
       $('#name-' + (S.draft.slots.length - 1)).focus();
     });
   },
-  /* Bestimmte Namen bekommen einen Spruch: nach kurzer Tipp-Pause oder beim Verlassen des Feldes, einmal pro Eingabe */
+  /* Bestimmte Namen bekommen einen Spruch: nach kurzer Tipp-Pause oder beim Verlassen des Feldes.
+     Kommentiert wird immer nur der oberste Name mit Spruch, und der nur einmal pro Eingabe. */
   checkNameJoke(s, now) {
     if (!s) return;
     if (!this.jokeDone) this.jokeDone = new Map();
     clearTimeout(this.jokeT);
-    const keyOf = () => (s.name || '').trim().toLowerCase();
-    const key = keyOf();
-    if (!TXT.nameJokes[key]) { this.jokeDone.delete(s.id); return; }
+    const key = jokeKeyOf(s.name);
+    if (!key) { this.jokeDone.delete(s.id); return; }
     if (this.jokeDone.get(s.id) === key) return;
     const fire = () => {
-      if (keyOf() !== key || this.jokeDone.get(s.id) === key || this.step !== 'names') return;
+      if (jokeKeyOf(s.name) !== key || this.jokeDone.get(s.id) === key || this.step !== 'names') return;
+      const top = S.draft.slots.find(x => jokeKeyOf(x.name));
+      if (!top || top.id !== s.id) return;
       this.jokeDone.set(s.id, key);
       this.say(nextNameJoke(key));
     };
@@ -4208,6 +4236,12 @@ const Intro = {
     startGame();
   }
 };
+
+function jokeKeyOf(name) {
+  const k = (name || '').trim().toLowerCase();
+  if (TXT.nameJokes[k]) return k;
+  return TXT.nameAlias[k] || null;
+}
 
 function nextNameJoke(key) {
   const KEY = 'naunin-skatrennen-witze';
