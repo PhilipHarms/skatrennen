@@ -82,9 +82,20 @@ const Sound = {
     if (!S.settings.sound) return null;
     try {
       if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-      if (this.ctx.state === 'suspended') this.ctx.resume();
+      if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume();
     } catch (e) { this.ctx = null; }
     return this.ctx;
+  },
+  /* Muss in einer echten Nutzergeste laufen (Tippen, Klick). iOS gibt den Ton erst frei,
+     wenn in so einer Geste etwas abgespielt wird, und nach App-Wechseln erneut. */
+  unlock() {
+    const ctx = this.ensure();
+    if (!ctx || (this.unlocked && ctx.state === 'running')) return;
+    try {
+      const b = ctx.createBuffer(1, 1, 22050), src = ctx.createBufferSource();
+      src.buffer = b; src.connect(ctx.destination); src.start(0);
+    } catch (e) { /* egal */ }
+    this.unlocked = ctx.state === 'running';
   },
   tone(freq, start, dur, type, vol) {
     const ctx = this.ctx; if (!ctx) return;
@@ -160,16 +171,19 @@ const Sound = {
 
 /* ===== Bildschirm wach halten ===== */
 let wakeLock = null;
+let wakePending = false;
 async function keepAwake() {
+  if (wakeLock || wakePending || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+  wakePending = true;
   try {
-    if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wakeLock) {
-      wakeLock = await navigator.wakeLock.request('screen');
-      wakeLock.addEventListener('release', () => { wakeLock = null; });
-    }
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
   } catch (e) { wakeLock = null; }
+  wakePending = false;
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
-document.addEventListener('pointerdown', () => { keepAwake(); Sound.ensure(); }, { once: true });
+/* Pointerdown zählt auf Touch-Geräten nicht als Nutzergeste, deshalb erst beim Loslassen */
+['pointerup', 'touchend', 'click', 'keydown'].forEach(evName => document.addEventListener(evName, () => { keepAwake(); Sound.unlock(); }, { passive: true }));
 
 /* ===== Kiebitz: Prinz Naunin spricht ===== */
 class Kiebitz {

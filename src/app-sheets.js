@@ -6,7 +6,7 @@ function openList() {
   S.games.forEach((g, i) => {
     const r = calcGame(g);
     if (g.player && totals[g.player] !== undefined) totals[g.player] += r.points;
-    const desc = g.type === 'pass' ? 'Eingepasst' : r.desc + (r.overbid && g.type !== 'frei' ? ', überreizt' : '') + (g.kontra === 1 ? ', Kontra' : g.kontra === 2 ? ', Re' : '') + (g.bock ? ', Bock' : '');
+    const desc = g.type === 'pass' ? 'Eingepasst' : r.desc === 'Selbst eingetragen' ? 'Eingetragen' : r.desc + (r.overbid && g.type !== 'frei' ? ', überreizt' : '') + (g.kontra === 1 ? ', Kontra' : g.kontra === 2 ? ', Re' : '') + (g.bock ? ', Bock' : '');
     rows += '<tr data-i="' + i + '" tabindex="0"><td class="nr">' + (i + 1) + '</td><td class="l desc-cell" title="' + esc(desc) + '">' + esc(desc) + '</td>' +
       ps.map(p => (g.player === p.id && g.type !== 'pass')
         ? '<td><span class="d ' + (r.points < 0 ? 'neg' : 'pos') + '">' + fmt(r.points) + '</span><span class="t">' + fmtScore(totals[p.id]) + '</span></td>'
@@ -16,7 +16,7 @@ function openList() {
     '<div class="sheet-head"><div style="flex:1;min-width:0"><h2 id="list-h">Spielliste</h2><div class="sub">' + S.games.length + ' Spiele. Antippen zum Ändern.</div></div>' +
     '<button class="xbtn" type="button" data-close aria-label="Schließen">×</button></div>' +
     '<div class="sheet-body">' + (S.games.length
-      ? '<div class="listwrap"><table class="liste"><thead><tr><th class="l">Nr</th><th class="l">Spiel</th>' + ps.map(p => '<th>' + esc(p.name) + '</th>').join('') + '</tr></thead><tbody>' + rows +
+      ? '<div class="listwrap"><table class="liste"><thead><tr><th class="l">Nr</th><th class="l">Spiel</th>' + ps.map(p => '<th title="' + esc(p.name) + '"><span class="pn">' + esc(p.name) + '</span></th>').join('') + '</tr></thead><tbody>' + rows +
         '</tbody><tfoot><tr><td></td><td class="l">Stand</td>' + ps.map(p => '<td>' + fmtScore(totals[p.id]) + '</td>').join('') + '</tr></tfoot></table></div>'
       : '<p class="note">Noch kein Spiel eingetragen. Der Zettel ist so leer wie mein Terminkalender.</p>') +
     '</div></div>';

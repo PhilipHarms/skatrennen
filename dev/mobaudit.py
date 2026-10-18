@@ -1,0 +1,47 @@
+"""Alle Bildschirme in Handygröße fotografieren."""
+import subprocess, time
+from playwright.sync_api import sync_playwright
+srv = subprocess.Popen(['python3', '-m', 'http.server', '8769', '-d', '/home/claude/skat/docs'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL); time.sleep(1)
+W, H = 390, 664
+def shot(pg, name): pg.screenshot(path='m_%s.png' % name)
+try:
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        ctx = b.new_context(viewport={'width': W, 'height': H}, device_scale_factor=2, is_mobile=True, has_touch=True)
+        pg = ctx.new_page(); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.goto('http://localhost:8769/'); pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(800)
+        shot(pg, '01_start')
+        pg.tap('#intro-start'); pg.wait_for_timeout(9000); shot(pg, '02_introlauf')
+        pg.wait_for_selector('#intro-banner:not([hidden])', timeout=20000); pg.wait_for_timeout(3000); shot(pg, '03_hello')
+        for i in range(3): pg.tap('#dlg-next'); pg.wait_for_timeout(3000)
+        shot(pg, '04_names')
+        for i, n in enumerate(['Charlotte', 'Jan', 'Gunnar']): pg.fill('#name-%d' % i, n)
+        pg.tap('#add-name'); pg.fill('#name-3', 'Maximilian'); pg.wait_for_timeout(1500); shot(pg, '05_names4')
+        pg.tap('#dlg-next'); pg.wait_for_timeout(4000); shot(pg, '06_figs')
+        pg.evaluate("window.scrollTo(0, 400)"); pg.wait_for_timeout(200); shot(pg, '06b_figs_scrolled')
+        pg.tap('#dlg-body .fig-row >> nth=0 >> button'); pg.wait_for_timeout(300); shot(pg, '07_picker')
+        pg.tap('#dlg-body .fig-row >> nth=0 >> button'); pg.wait_for_timeout(200)
+        pg.tap('#dlg-next'); pg.wait_for_timeout(4000); shot(pg, '08_seats')
+        pg.tap('#dlg-next'); pg.wait_for_timeout(4000); shot(pg, '09_dealer')
+        pg.tap('[data-d="1"]'); pg.wait_for_timeout(2500); pg.tap('#dlg-next'); pg.wait_for_timeout(1000); shot(pg, '10_prost')
+        pg.wait_for_timeout(5000); shot(pg, '11_race')
+        pg.tap('#btn-enter'); pg.wait_for_timeout(400); shot(pg, '12_entry')
+        pg.tap('#entry-body [data-k=player] >> nth=0'); pg.fill('#fp', '96'); pg.tap('#entry-body [data-k=tag][data-v=grand]'); pg.wait_for_timeout(100); shot(pg, '12b_entry_filled')
+        pg.tap('#entry-ok'); pg.wait_for_timeout(1500)
+        for who, pts in [(1, -48), (2, 120), (0, 72), (1, -120), (2, 60)]:
+            pg.tap('#btn-enter'); pg.wait_for_timeout(200); pg.tap('#entry-body [data-k=player] >> nth=%d' % who)
+            pg.tap('#entry-body [data-k=freiSign][data-v="%d"]' % (1 if pts > 0 else -1)); pg.fill('#fp', str(abs(pts))); pg.tap('#entry-ok'); pg.wait_for_timeout(900)
+        pg.wait_for_timeout(2500); shot(pg, '13_race_scores')
+        pg.evaluate("window.scrollTo(0, 9999)"); pg.wait_for_timeout(200); shot(pg, '13b_race_bottom'); pg.evaluate("window.scrollTo(0, 0)")
+        pg.tap('#btn-enter'); pg.wait_for_timeout(200); pg.tap('#entry-body [data-k=mode]'); pg.wait_for_timeout(300); shot(pg, '14_calc')
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+        pg.tap('#btn-list'); pg.wait_for_timeout(400); shot(pg, '15_list'); pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+        pg.tap('#btn-settings'); pg.wait_for_timeout(400); shot(pg, '16_settings')
+        pg.evaluate("document.querySelector('.sheet-body').scrollTop = 9999"); pg.wait_for_timeout(200); shot(pg, '16b_settings_bottom')
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+        pg.tap('#btn-eval'); pg.wait_for_timeout(400); shot(pg, '17_eval'); pg.tap('.modal [data-a=ok]'); pg.wait_for_timeout(4500); shot(pg, '18_podium')
+        pg.evaluate("window.scrollTo(0, 700)"); pg.wait_for_timeout(300); shot(pg, '18b_podium2')
+        pg.evaluate("window.scrollTo(0, 99999)"); pg.wait_for_timeout(300); shot(pg, '18c_podium3')
+        print('Fehler:', errs); b.close()
+finally:
+    srv.terminate()

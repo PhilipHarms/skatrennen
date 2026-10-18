@@ -130,7 +130,8 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 .speech { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .speech .who { font-family: var(--f-num); font-size: 9px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
 .speech .say { margin: 0; min-height: 3.9em; font-size: 17px; color: var(--text); }
-.speech .say .cursor { display: inline-block; width: .5em; height: .9em; background: var(--gold); vertical-align: -1px; margin-left: 2px; animation: blink 0.8s steps(1) infinite; }
+/* Der Cursor nimmt keinen Platz weg, damit beim Tippen nichts umbricht */
+.speech .say .cursor { display: inline-block; width: .5em; height: .9em; background: var(--gold); vertical-align: -1px; margin-left: 2px; margin-right: calc(-.5em - 2px); animation: blink 0.8s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .speech .status { font-size: 14px; color: var(--muted); border-top: 2px dashed var(--line); padding-top: 6px; }
 .speech .status b { color: var(--text); font-weight: 600; }
@@ -212,9 +213,14 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 
 /* Figurenwahl */
 .fig-list { display: flex; flex-direction: column; gap: 10px; }
-.fig-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.fig-row { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "card name btn" "card char char" "card reason reason"; column-gap: 12px; row-gap: 2px; align-items: start; }
+.fig-row .fsp-card { grid-area: card; }
+.fig-row .ftxt { display: contents; }
+.fig-row .fname { grid-area: name; align-self: center; }
+.fig-row .fchar { grid-area: char; }
+.fig-row .freason { grid-area: reason; }
+.fig-row > .btn { grid-area: btn; align-self: center; }
 .fig-row .fsp { width: 48px; height: 60px; display: grid; place-items: end center; background: #d9c58f; border: 3px solid var(--ink); padding-bottom: 2px; }
-.fig-row .ftxt { min-width: 0; }
 .fsp-card .pcard { box-shadow: 2px 2px 0 rgba(27,20,39,.25); }
 .fig-row .fname { font-weight: 700; font-size: 18px; }
 .fig-row .fchar { font-family: var(--f-num); font-size: 9px; color: var(--gold-2); margin-top: 2px; }
@@ -369,11 +375,14 @@ table.liste td .t { font-family: var(--f-num); font-size: 10px; }
 table.liste tbody tr { cursor: pointer; }
 table.liste tbody tr:hover { background: #f6e9c4; }
 table.liste tfoot td { font-family: var(--f-num); font-size: 11px; background: var(--parch-2); border-bottom: 0; }
-.desc-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.desc-cell { white-space: normal !important; min-width: 76px; font-size: 13px; line-height: 1.25; }
+table.liste th .pn { display: block; max-width: 58px; overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
+table.liste th, table.liste td { padding-left: 4px; padding-right: 4px; }
 
 /* Einstellungen */
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 2px dashed var(--parch-3); }
 .set-row span { min-width: 0; }
+.set-row .numin { flex: 0 0 104px; width: 104px; }
 .set-row small { display: block; color: #6b5838; font-size: 13px; }
 
 /* ---------- Podest ---------- */
@@ -3066,9 +3075,20 @@ const Sound = {
     if (!S.settings.sound) return null;
     try {
       if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-      if (this.ctx.state === 'suspended') this.ctx.resume();
+      if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume();
     } catch (e) { this.ctx = null; }
     return this.ctx;
+  },
+  /* Muss in einer echten Nutzergeste laufen (Tippen, Klick). iOS gibt den Ton erst frei,
+     wenn in so einer Geste etwas abgespielt wird, und nach App-Wechseln erneut. */
+  unlock() {
+    const ctx = this.ensure();
+    if (!ctx || (this.unlocked && ctx.state === 'running')) return;
+    try {
+      const b = ctx.createBuffer(1, 1, 22050), src = ctx.createBufferSource();
+      src.buffer = b; src.connect(ctx.destination); src.start(0);
+    } catch (e) { /* egal */ }
+    this.unlocked = ctx.state === 'running';
   },
   tone(freq, start, dur, type, vol) {
     const ctx = this.ctx; if (!ctx) return;
@@ -3144,16 +3164,19 @@ const Sound = {
 
 /* ===== Bildschirm wach halten ===== */
 let wakeLock = null;
+let wakePending = false;
 async function keepAwake() {
+  if (wakeLock || wakePending || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+  wakePending = true;
   try {
-    if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wakeLock) {
-      wakeLock = await navigator.wakeLock.request('screen');
-      wakeLock.addEventListener('release', () => { wakeLock = null; });
-    }
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
   } catch (e) { wakeLock = null; }
+  wakePending = false;
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
-document.addEventListener('pointerdown', () => { keepAwake(); Sound.ensure(); }, { once: true });
+/* Pointerdown zählt auf Touch-Geräten nicht als Nutzergeste, deshalb erst beim Loslassen */
+['pointerup', 'touchend', 'click', 'keydown'].forEach(evName => document.addEventListener(evName, () => { keepAwake(); Sound.unlock(); }, { passive: true }));
 
 /* ===== Kiebitz: Prinz Naunin spricht ===== */
 class Kiebitz {
@@ -3890,7 +3913,11 @@ const Intro = {
     Stage.init();
     let ft = null;
     window.addEventListener('resize', () => { clearTimeout(ft); ft = setTimeout(() => { if (!$('#scr-intro').hidden) this.fitBanner(); }, 150); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!$('#scr-intro').hidden) this.fitBanner(); });
+    if (document.fonts && document.fonts.ready) {
+      const refit = () => { if (!$('#scr-intro').hidden) this.fitBanner(); };
+      document.fonts.ready.then(refit);
+      if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refit);
+    }
     drawWappen($('#wappen'));
     this.k = new Kiebitz($('#intro-banner'));
     $('#intro-banner').addEventListener('click', () => {
@@ -3936,7 +3963,7 @@ const Intro = {
     if (!top || !top.clientWidth) return;
     const probe = bn.cloneNode(true);
     probe.removeAttribute('id'); probe.hidden = false; probe.classList.remove('pop');
-    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;width:' + top.clientWidth + 'px';
+    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;box-sizing:border-box;width:' + top.clientWidth + 'px';
     top.appendChild(probe);
     const say = $('.say', probe);
     say.style.minHeight = '0';
@@ -5284,7 +5311,7 @@ function openList() {
   S.games.forEach((g, i) => {
     const r = calcGame(g);
     if (g.player && totals[g.player] !== undefined) totals[g.player] += r.points;
-    const desc = g.type === 'pass' ? 'Eingepasst' : r.desc + (r.overbid && g.type !== 'frei' ? ', überreizt' : '') + (g.kontra === 1 ? ', Kontra' : g.kontra === 2 ? ', Re' : '') + (g.bock ? ', Bock' : '');
+    const desc = g.type === 'pass' ? 'Eingepasst' : r.desc === 'Selbst eingetragen' ? 'Eingetragen' : r.desc + (r.overbid && g.type !== 'frei' ? ', überreizt' : '') + (g.kontra === 1 ? ', Kontra' : g.kontra === 2 ? ', Re' : '') + (g.bock ? ', Bock' : '');
     rows += '<tr data-i="' + i + '" tabindex="0"><td class="nr">' + (i + 1) + '</td><td class="l desc-cell" title="' + esc(desc) + '">' + esc(desc) + '</td>' +
       ps.map(p => (g.player === p.id && g.type !== 'pass')
         ? '<td><span class="d ' + (r.points < 0 ? 'neg' : 'pos') + '">' + fmt(r.points) + '</span><span class="t">' + fmtScore(totals[p.id]) + '</span></td>'
@@ -5294,7 +5321,7 @@ function openList() {
     '<div class="sheet-head"><div style="flex:1;min-width:0"><h2 id="list-h">Spielliste</h2><div class="sub">' + S.games.length + ' Spiele. Antippen zum Ändern.</div></div>' +
     '<button class="xbtn" type="button" data-close aria-label="Schließen">×</button></div>' +
     '<div class="sheet-body">' + (S.games.length
-      ? '<div class="listwrap"><table class="liste"><thead><tr><th class="l">Nr</th><th class="l">Spiel</th>' + ps.map(p => '<th>' + esc(p.name) + '</th>').join('') + '</tr></thead><tbody>' + rows +
+      ? '<div class="listwrap"><table class="liste"><thead><tr><th class="l">Nr</th><th class="l">Spiel</th>' + ps.map(p => '<th title="' + esc(p.name) + '"><span class="pn">' + esc(p.name) + '</span></th>').join('') + '</tr></thead><tbody>' + rows +
         '</tbody><tfoot><tr><td></td><td class="l">Stand</td>' + ps.map(p => '<td>' + fmtScore(totals[p.id]) + '</td>').join('') + '</tr></tfoot></table></div>'
       : '<p class="note">Noch kein Spiel eingetragen. Der Zettel ist so leer wie mein Terminkalender.</p>') +
     '</div></div>';

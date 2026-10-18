@@ -104,7 +104,8 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 .speech { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .speech .who { font-family: var(--f-num); font-size: 9px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
 .speech .say { margin: 0; min-height: 3.9em; font-size: 17px; color: var(--text); }
-.speech .say .cursor { display: inline-block; width: .5em; height: .9em; background: var(--gold); vertical-align: -1px; margin-left: 2px; animation: blink 0.8s steps(1) infinite; }
+/* Der Cursor nimmt keinen Platz weg, damit beim Tippen nichts umbricht */
+.speech .say .cursor { display: inline-block; width: .5em; height: .9em; background: var(--gold); vertical-align: -1px; margin-left: 2px; margin-right: calc(-.5em - 2px); animation: blink 0.8s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 .speech .status { font-size: 14px; color: var(--muted); border-top: 2px dashed var(--line); padding-top: 6px; }
 .speech .status b { color: var(--text); font-weight: 600; }
@@ -186,9 +187,14 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 
 /* Figurenwahl */
 .fig-list { display: flex; flex-direction: column; gap: 10px; }
-.fig-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.fig-row { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "card name btn" "card char char" "card reason reason"; column-gap: 12px; row-gap: 2px; align-items: start; }
+.fig-row .fsp-card { grid-area: card; }
+.fig-row .ftxt { display: contents; }
+.fig-row .fname { grid-area: name; align-self: center; }
+.fig-row .fchar { grid-area: char; }
+.fig-row .freason { grid-area: reason; }
+.fig-row > .btn { grid-area: btn; align-self: center; }
 .fig-row .fsp { width: 48px; height: 60px; display: grid; place-items: end center; background: #d9c58f; border: 3px solid var(--ink); padding-bottom: 2px; }
-.fig-row .ftxt { min-width: 0; }
 .fsp-card .pcard { box-shadow: 2px 2px 0 rgba(27,20,39,.25); }
 .fig-row .fname { font-weight: 700; font-size: 18px; }
 .fig-row .fchar { font-family: var(--f-num); font-size: 9px; color: var(--gold-2); margin-top: 2px; }
@@ -343,11 +349,14 @@ table.liste td .t { font-family: var(--f-num); font-size: 10px; }
 table.liste tbody tr { cursor: pointer; }
 table.liste tbody tr:hover { background: #f6e9c4; }
 table.liste tfoot td { font-family: var(--f-num); font-size: 11px; background: var(--parch-2); border-bottom: 0; }
-.desc-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.desc-cell { white-space: normal !important; min-width: 76px; font-size: 13px; line-height: 1.25; }
+table.liste th .pn { display: block; max-width: 58px; overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
+table.liste th, table.liste td { padding-left: 4px; padding-right: 4px; }
 
 /* Einstellungen */
 .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 2px dashed var(--parch-3); }
 .set-row span { min-width: 0; }
+.set-row .numin { flex: 0 0 104px; width: 104px; }
 .set-row small { display: block; color: #6b5838; font-size: 13px; }
 
 /* ---------- Podest ---------- */

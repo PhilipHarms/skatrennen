@@ -605,7 +605,11 @@ const Intro = {
     Stage.init();
     let ft = null;
     window.addEventListener('resize', () => { clearTimeout(ft); ft = setTimeout(() => { if (!$('#scr-intro').hidden) this.fitBanner(); }, 150); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!$('#scr-intro').hidden) this.fitBanner(); });
+    if (document.fonts && document.fonts.ready) {
+      const refit = () => { if (!$('#scr-intro').hidden) this.fitBanner(); };
+      document.fonts.ready.then(refit);
+      if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refit);
+    }
     drawWappen($('#wappen'));
     this.k = new Kiebitz($('#intro-banner'));
     $('#intro-banner').addEventListener('click', () => {
@@ -651,7 +655,7 @@ const Intro = {
     if (!top || !top.clientWidth) return;
     const probe = bn.cloneNode(true);
     probe.removeAttribute('id'); probe.hidden = false; probe.classList.remove('pop');
-    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;width:' + top.clientWidth + 'px';
+    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;box-sizing:border-box;width:' + top.clientWidth + 'px';
     top.appendChild(probe);
     const say = $('.say', probe);
     say.style.minHeight = '0';
