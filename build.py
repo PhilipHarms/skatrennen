@@ -66,7 +66,7 @@ head = f'''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Naunins Skatrennen</title>
+<title>Skatrennen</title>
 <meta name="description" content="Wer schreibt, der bleibt. Wer verliert, kriecht. Der Skat-Punktezähler von Prinz Naunin.">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="{NIGHT}">
