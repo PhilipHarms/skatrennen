@@ -484,9 +484,14 @@ body.plain, body.plain::before { background: var(--parch); }
 #scr-intro.plain .stage-wrap { border-color: transparent; box-shadow: none; background: var(--parch); }
 #scr-intro.plain .startbtn { color: var(--red-2); background: transparent; border-color: var(--red-2); box-shadow: none; text-shadow: none; }
 .intro-top > * { grid-area: 1 / 1; }
-.intro-top.talking .title-block { visibility: hidden; }
-#intro-banner { align-self: end; cursor: pointer; box-sizing: border-box; }
-#intro-banner .say { min-height: 0; }
+.intro-top.talking .title-block { visibility: hidden; position: absolute; left: 0; right: 0; top: 0; }
+/* Naunins Kasten: kompakt fuer drei Zeilen. Laengere Texte laufen unter der Karte weiter
+   und wachsen ueber den Himmel der Buehne, ohne dass darunter etwas verrutscht. */
+.ibanner { position: absolute; top: 0; left: 0; right: 0; z-index: 20; display: block; cursor: pointer; box-sizing: border-box; }
+.ibanner .pcard { float: left; margin: 0 12px 4px 0; }
+.ibanner .speech { display: block; }
+.ibanner .who { margin-bottom: 6px; }
+.ibanner .say { min-height: 0; line-height: 1.35; }
 #intro-banner.pop { animation: dlgin .28s steps(5) both; }
 @keyframes dlgin { from { transform: translateY(-14px) scaleY(.5); opacity: 0; } to { transform: none; opacity: 1; } }
 .dlg-lower { display: flex; flex-direction: column; gap: 12px; }
@@ -517,7 +522,7 @@ body.plain, body.plain::before { background: var(--parch); }
         <h1>Naunins Skatrennen</h1>
         <p>Wer schreibt, der bleibt. Wer verliert, kriecht.</p>
       </div>
-      <div class="kiebitz" id="intro-banner" hidden>
+      <div class="kiebitz ibanner" id="intro-banner" hidden>
         <div class="pcard" style="--nz:1.6"><span class="idx">B<b>&clubs;</b></span><canvas class="px" width="43" height="38"></canvas></div>
         <div class="speech"><div class="who">Prinz Naunin</div><p class="say" aria-hidden="true"></p><span class="sr" aria-live="polite"></span><div class="status" hidden></div></div>
       </div>
@@ -3958,20 +3963,28 @@ const Intro = {
       fill(TXT.same, { names: listNames(names), dealer: longest }),
       fill(TXT.dealerPicked, { dealer: longest, vh: longest })]);
   },
+  /* Kompakte Kastenhoehe: Karte oder Name plus drei Zeilen, je nachdem was hoeher ist */
   fitBanner() {
     const top = $('#intro-top'), bn = $('#intro-banner');
     if (!top || !top.clientWidth) return;
     const probe = bn.cloneNode(true);
     probe.removeAttribute('id'); probe.hidden = false; probe.classList.remove('pop');
-    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;box-sizing:border-box;width:' + top.clientWidth + 'px';
+    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;min-height:0;box-sizing:border-box;width:' + top.clientWidth + 'px';
     top.appendChild(probe);
     const say = $('.say', probe);
-    say.style.minHeight = '0';
-    let max = 0;
-    this.bannerTexts().forEach(t => { say.textContent = t; max = Math.max(max, probe.offsetHeight); });
+    say.textContent = 'Hm.';
+    const lh = parseFloat(getComputedStyle(say).lineHeight) || 23;
+    const who = $('.who', probe);
+    const whoH = who.offsetHeight + (parseFloat(getComputedStyle(who).marginBottom) || 0);
+    const cs = getComputedStyle(probe);
+    const chrome = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((a, k) => a + (parseFloat(cs[k]) || 0), 0);
+    const h0 = probe.offsetHeight;
     probe.remove();
-    bn.style.height = max + 'px';
-    top.style.minHeight = Math.max(max, $('.title-block', top).offsetHeight) + 'px';
+    const compact = Math.ceil(Math.max(h0, chrome + whoH + 3 * lh));
+    this.bnCompact = compact;
+    bn.style.height = '';
+    bn.style.minHeight = compact + 'px';
+    top.style.minHeight = compact + 'px';
   },
   setPlain(on, fade) {
     const sc = $('#scr-intro'), bd = document.body;
@@ -4010,7 +4023,16 @@ const Intro = {
   openDialog(step) {
     const bn = $('#intro-banner');
     if (bn.hidden) {
-      bn.hidden = false; $('#intro-top').classList.add('talking');
+      const top = $('#intro-top'), from = top.offsetHeight;
+      bn.hidden = false;
+      this.fitBanner();
+      top.style.height = from + 'px';
+      top.classList.add('talking');
+      void top.offsetHeight;
+      top.style.transition = 'height .32s steps(5)';
+      top.style.height = (this.bnCompact || from) + 'px';
+      clearTimeout(this.topT);
+      this.topT = setTimeout(() => { top.style.transition = ''; top.style.height = ''; }, 380);
       bn.classList.remove('pop'); void bn.offsetWidth; bn.classList.add('pop');
     }
     $('#intro-dialog').hidden = false;

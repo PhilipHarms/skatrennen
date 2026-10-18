@@ -650,20 +650,28 @@ const Intro = {
       fill(TXT.same, { names: listNames(names), dealer: longest }),
       fill(TXT.dealerPicked, { dealer: longest, vh: longest })]);
   },
+  /* Kompakte Kastenhoehe: Karte oder Name plus drei Zeilen, je nachdem was hoeher ist */
   fitBanner() {
     const top = $('#intro-top'), bn = $('#intro-banner');
     if (!top || !top.clientWidth) return;
     const probe = bn.cloneNode(true);
     probe.removeAttribute('id'); probe.hidden = false; probe.classList.remove('pop');
-    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;box-sizing:border-box;width:' + top.clientWidth + 'px';
+    probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;height:auto;min-height:0;box-sizing:border-box;width:' + top.clientWidth + 'px';
     top.appendChild(probe);
     const say = $('.say', probe);
-    say.style.minHeight = '0';
-    let max = 0;
-    this.bannerTexts().forEach(t => { say.textContent = t; max = Math.max(max, probe.offsetHeight); });
+    say.textContent = 'Hm.';
+    const lh = parseFloat(getComputedStyle(say).lineHeight) || 23;
+    const who = $('.who', probe);
+    const whoH = who.offsetHeight + (parseFloat(getComputedStyle(who).marginBottom) || 0);
+    const cs = getComputedStyle(probe);
+    const chrome = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((a, k) => a + (parseFloat(cs[k]) || 0), 0);
+    const h0 = probe.offsetHeight;
     probe.remove();
-    bn.style.height = max + 'px';
-    top.style.minHeight = Math.max(max, $('.title-block', top).offsetHeight) + 'px';
+    const compact = Math.ceil(Math.max(h0, chrome + whoH + 3 * lh));
+    this.bnCompact = compact;
+    bn.style.height = '';
+    bn.style.minHeight = compact + 'px';
+    top.style.minHeight = compact + 'px';
   },
   setPlain(on, fade) {
     const sc = $('#scr-intro'), bd = document.body;
@@ -702,7 +710,16 @@ const Intro = {
   openDialog(step) {
     const bn = $('#intro-banner');
     if (bn.hidden) {
-      bn.hidden = false; $('#intro-top').classList.add('talking');
+      const top = $('#intro-top'), from = top.offsetHeight;
+      bn.hidden = false;
+      this.fitBanner();
+      top.style.height = from + 'px';
+      top.classList.add('talking');
+      void top.offsetHeight;
+      top.style.transition = 'height .32s steps(5)';
+      top.style.height = (this.bnCompact || from) + 'px';
+      clearTimeout(this.topT);
+      this.topT = setTimeout(() => { top.style.transition = ''; top.style.height = ''; }, 380);
       bn.classList.remove('pop'); void bn.offsetWidth; bn.classList.add('pop');
     }
     $('#intro-dialog').hidden = false;
