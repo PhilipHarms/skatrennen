@@ -151,6 +151,11 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: b
 .name-list { display: flex; flex-direction: column; gap: 8px; }
 .name-row { display: flex; gap: 8px; align-items: center; }
 .name-row .nr { font-family: var(--f-num); font-size: 10px; width: 22px; text-align: right; color: var(--gold-2); }
+.nquip { position: relative; display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 2px 30px; padding: 8px 10px; background: var(--night-2); color: var(--text); border: 3px solid var(--ink); font-size: 15px; line-height: 1.3; animation: dlgin .22s steps(4) both; }
+.nquip::before { content: ""; position: absolute; top: -12px; left: 16px; border: 6px solid transparent; border-bottom-color: var(--ink); }
+.nquip .qface { flex: none; background: var(--parch); border: 2px solid var(--ink); padding: 2px 2px 0; }
+.nquip p { margin: 0; }
+.nquip .ghost { visibility: hidden; }
 .name-row input {
   flex: 1; min-width: 0; height: 44px; padding: 0 12px;
   background: #fff8e6; color: var(--parch-ink);

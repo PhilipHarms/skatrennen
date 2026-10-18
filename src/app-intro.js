@@ -824,6 +824,7 @@ const Intro = {
     }
   },
   renderNames(body) {
+    if (this.quipT) { clearInterval(this.quipT); this.quipT = null; }
     const slots = S.draft.slots;
     body.innerHTML = '<div class="panel"><h2>Wer spielt mit?</h2><div class="name-list">' +
       slots.map((s, i) => '<div class="name-row"><span class="nr">' + (i + 1) + '</span>' +
@@ -862,14 +863,40 @@ const Intro = {
     if (!this.jokeDone) this.jokeDone = new Map();
     clearTimeout(this.jokeT);
     const key = jokeKeyOf(s.name);
-    if (!key) { this.jokeDone.delete(s.id); return; }
+    if (!key) { this.jokeDone.delete(s.id); this.hideQuip(s.id); return; }
     if (this.jokeDone.get(s.id) === key) return;
     const fire = () => {
       if (jokeKeyOf(s.name) !== key || this.jokeDone.get(s.id) === key || this.step !== 'names') return;
       this.jokeDone.set(s.id, key);
-      this.say(nextNameJoke(key));
+      const line = nextNameJoke(key);
+      this.say(line);
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) this.showQuip(s.id, line);
     };
     if (now) fire(); else this.jokeT = setTimeout(fire, 1000);
+  },
+  /* Auf dem Handy verdeckt die Tastatur Naunins Kasten. Dann spricht er direkt unter dem Feld. */
+  showQuip(id, text) {
+    this.hideQuip();
+    const idx = S.draft.slots.findIndex(x => x.id === id);
+    const inp = $('#name-' + idx);
+    if (!inp) return;
+    const q = document.createElement('div');
+    q.className = 'nquip'; q.dataset.id = id;
+    q.innerHTML = '<span class="qface"></span><p aria-hidden="true"><span class="vis"></span><span class="ghost"></span></p>';
+    $('.qface', q).appendChild(spriteEl(spriteNaunin('idle'), 1));
+    inp.closest('.name-row').after(q);
+    const vis = $('.vis', q), ghost = $('.ghost', q);
+    ghost.textContent = text;
+    let i = 0;
+    this.quipT = setInterval(() => {
+      i += 1;
+      vis.textContent = text.slice(0, i); ghost.textContent = text.slice(i);
+      if (i >= text.length) { clearInterval(this.quipT); this.quipT = null; }
+    }, 24);
+  },
+  hideQuip(id) {
+    $$('.nquip').forEach(q => { if (!id || q.dataset.id === id) q.remove(); });
+    if (!$('.nquip') && this.quipT) { clearInterval(this.quipT); this.quipT = null; }
   },
   renderFigures(body) {
     body.innerHTML = '<div class="panel"><h2>Eure Figuren</h2><div class="fig-list" id="figlist"></div></div>';
