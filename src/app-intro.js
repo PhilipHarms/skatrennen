@@ -650,7 +650,8 @@ const Intro = {
       fill(TXT.same, { names: listNames(names), dealer: longest }),
       fill(TXT.dealerPicked, { dealer: longest, vh: longest })]);
   },
-  /* Kompakte Kastenhoehe: Karte oder Name plus drei Zeilen, je nachdem was hoeher ist */
+  /* Kompakte Kastenhoehe: Karte oder Name plus drei Zeilen, je nachdem was hoeher ist.
+     Laengere Texte wachsen ueber die Buehne. */
   fitBanner() {
     const top = $('#intro-top'), bn = $('#intro-banner');
     if (!top || !top.clientWidth) return;
@@ -662,7 +663,7 @@ const Intro = {
     say.textContent = 'Hm.';
     const lh = parseFloat(getComputedStyle(say).lineHeight) || 23;
     const who = $('.who', probe);
-    const whoH = who.offsetHeight + (parseFloat(getComputedStyle(who).marginBottom) || 0);
+    const whoH = who.offsetHeight + (parseFloat(getComputedStyle($('.speech', probe)).rowGap) || 0);
     const cs = getComputedStyle(probe);
     const chrome = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((a, k) => a + (parseFloat(cs[k]) || 0), 0);
     const h0 = probe.offsetHeight;

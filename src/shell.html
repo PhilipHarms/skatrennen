@@ -466,12 +466,9 @@ body.plain, body.plain::before { background: var(--parch); }
 #scr-intro.plain .startbtn { color: var(--red-2); background: transparent; border-color: var(--red-2); box-shadow: none; text-shadow: none; }
 .intro-top > * { grid-area: 1 / 1; }
 .intro-top.talking .title-block { visibility: hidden; position: absolute; left: 0; right: 0; top: 0; }
-/* Naunins Kasten: kompakt fuer drei Zeilen. Laengere Texte laufen unter der Karte weiter
-   und wachsen ueber den Himmel der Buehne, ohne dass darunter etwas verrutscht. */
-.ibanner { position: absolute; top: 0; left: 0; right: 0; z-index: 20; display: block; cursor: pointer; box-sizing: border-box; }
-.ibanner .pcard { float: left; margin: 0 12px 4px 0; }
-.ibanner .speech { display: block; }
-.ibanner .who { margin-bottom: 6px; }
+/* Naunins Kasten: kompakt fuer drei Zeilen. Laengere Texte wachsen ueber den Himmel
+   der Buehne, ohne dass darunter etwas verrutscht. */
+.ibanner { position: absolute; top: 0; left: 0; right: 0; z-index: 20; cursor: pointer; box-sizing: border-box; }
 .ibanner .say { min-height: 0; line-height: 1.35; }
 #intro-banner.pop { animation: dlgin .28s steps(5) both; }
 @keyframes dlgin { from { transform: translateY(-14px) scaleY(.5); opacity: 0; } to { transform: none; opacity: 1; } }
