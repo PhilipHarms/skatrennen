@@ -31,7 +31,6 @@ function skyPalette(d) {
   return { bands: ['#0c0a22', '#14123a', '#1d1b4a', '#28265c'], stars: true, moon: isLate(d), hill: '#141a2e', hill2: '#1c243a', castle: '#211c3c', castle2: '#17132c', win: '#f5c542', label: '#e9e2ff', lshadow: '#0c0a22' };
 }
 
-const TIER_LABEL = { walk: 'zu Fu\u00df', ride: 'zu Pferd', unicorn: 'auf dem Einhorn', glow: 'auf dem Einhorn und leuchtet', zombie: 'kriecht als Zombie', swamp: 'versinkt im Moor' };
 
 const Race = {
   k: null, SKY: 30, LANE: 32, ML: 14, MR: 20,
@@ -192,12 +191,11 @@ const Race = {
       const s = st[p.id];
       if (prev === null || s.score !== prev) rank = idx + 1;
       prev = s.score;
-      const tier = tierOf(s.score, S.settings);
       const row = document.createElement('div');
       row.className = 'st-row';
       const tags = (s.streak >= 3 ? '<span class="tag fire">' + s.streak + ' IN FOLGE</span>' : '') + (s.streak <= -3 ? '<span class="tag rain">PECH</span>' : '');
       row.innerHTML = '<span class="rk">' + rank + '</span><span class="sp"></span>' +
-        '<span class="nm"><b>' + esc(p.name) + tags + '</b><small>' + esc(charName(p.char)) + ', ' + TIER_LABEL[tier] + '</small></span>' +
+        '<span class="nm"><b>' + esc(p.name) + tags + '</b><small>' + esc(charName(p.char)) + '</small></span>' +
         '<span class="pts"><span class="' + (s.score < 0 ? 'neg' : '') + '">' + fmtScore(s.score) + '</span>' +
         (S.games.length ? '<small>' + spiele(s.played) + '</small>' : '') + '</span>';
       $('.sp', row).appendChild(spriteEl(spriteWalk(p.char, 0, s.score < 0), 2));

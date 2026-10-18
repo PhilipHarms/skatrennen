@@ -1,7 +1,7 @@
 /* Offline-Modus fuer Naunins Skatrennen.
    Seite: erst Netz (damit Updates sofort ankommen), ohne Netz aus dem Speicher.
    Schriften und Bilder: aus dem Speicher. */
-const CACHE = 'skatrennen-1.3-9649631fa1';
+const CACHE = 'skatrennen-1.3-5b5d293e2d';
 const FILES = ["./", "fonts/jacquard-24-latin-400-normal.woff2", "fonts/pixelify-sans-latin-400-normal.woff2", "fonts/pixelify-sans-latin-600-normal.woff2", "fonts/pixelify-sans-latin-700-normal.woff2", "fonts/press-start-2p-latin-400-normal.woff2", "icons/apple-touch-icon.png", "icons/favicon-48.png", "icons/favicon-96.png", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png", "manifest.webmanifest"];
 
 self.addEventListener('install', ev => {

@@ -834,8 +834,8 @@ const Intro = {
       $('#name-' + (S.draft.slots.length - 1)).focus();
     });
   },
-  /* Bestimmte Namen bekommen einen Spruch: nach kurzer Tipp-Pause oder beim Verlassen des Feldes.
-     Kommentiert wird immer nur der oberste Name mit Spruch, und der nur einmal pro Eingabe. */
+  /* Bestimmte Namen bekommen einen Spruch: nach kurzer Tipp-Pause oder beim Verlassen des Feldes,
+     jeder Name einmal pro Eingabe. */
   checkNameJoke(s, now) {
     if (!s) return;
     if (!this.jokeDone) this.jokeDone = new Map();
@@ -845,8 +845,6 @@ const Intro = {
     if (this.jokeDone.get(s.id) === key) return;
     const fire = () => {
       if (jokeKeyOf(s.name) !== key || this.jokeDone.get(s.id) === key || this.step !== 'names') return;
-      const top = S.draft.slots.find(x => jokeKeyOf(x.name));
-      if (!top || top.id !== s.id) return;
       this.jokeDone.set(s.id, key);
       this.say(nextNameJoke(key));
     };
