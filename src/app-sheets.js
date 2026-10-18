@@ -29,6 +29,25 @@ function openList() {
   });
 }
 
+function openLegal() {
+  const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="legal-h">' +
+    '<div class="sheet-head"><div style="flex:1"><h2 id="legal-h">Impressum</h2><div class="sub">und Datenschutz</div></div>' +
+    '<button class="xbtn" type="button" data-close aria-label="Schlie\u00dfen">\u00d7</button></div>' +
+    '<div class="sheet-body legal">' +
+    '<div class="sec"><span class="lbl">Anbieter</span>' +
+    '<p>Philip Harms<br>c/o Afilio GmbH<br>Chausseestra\u00dfe 8<br>10115 Berlin</p>' +
+    '<p>Naunins Skatrennen ist ein privates Hobbyprojekt ohne kommerzielle Absicht.</p></div>' +
+    '<div class="sec"><span class="lbl">Datenschutz</span>' +
+    '<p><b>Verantwortlich</b> ist Philip Harms, Anschrift wie oben.</p>' +
+    '<p><b>Auf deinem Ger\u00e4t:</b> Namen, Figuren und Spielst\u00e4nde speichert die Seite nur im Speicher deines Browsers. Sie werden nicht \u00fcbertragen. L\u00f6schen kannst du sie \u00fcber \u201eGanz neu, andere Leute\u201c oder indem du die Websitedaten im Browser l\u00f6schst.</p>' +
+    '<p><b>Keine Cookies, kein Tracking, keine Werbung.</b> Schriften und Bilder liegen auf dieser Seite selbst, Inhalte von Drittanbietern werden nicht geladen.</p>' +
+    '<p><b>Hosting:</b> Die Seite liegt bei GitHub Pages (GitHub, Inc., USA). Beim Aufruf verarbeitet GitHub technisch notwendige Daten wie deine IP-Adresse in Server-Logs, auch in den USA. Rechtsgrundlage ist das berechtigte Interesse an einem sicheren Betrieb der Seite (Art. 6 Abs. 1 lit. f DSGVO). Mehr dazu steht in der Datenschutzerkl\u00e4rung von GitHub.</p>' +
+    '<p><b>Deine Rechte:</b> Du hast das Recht auf Auskunft, Berichtigung, L\u00f6schung, Einschr\u00e4nkung und Widerspruch (Art. 15 bis 21 DSGVO) sowie auf Beschwerde bei einer Datenschutz-Aufsichtsbeh\u00f6rde.</p></div>' +
+    '</div></div>';
+  const w = Layer.open(html);
+  $('[data-close]', w).addEventListener('click', () => Layer.close());
+}
+
 function openSettings() {
   const st = S.settings;
   const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-h">' +
@@ -49,9 +68,12 @@ function openSettings() {
     '<button type="button" class="btn dark" data-a="revanche">Neues Spiel, gleiche Runde</button>' +
     '<button type="button" class="btn red" data-a="fresh">Ganz neu, andere Leute</button></div>' +
     '<p class="note">Der Spielstand bleibt auf diesem Gerät gespeichert, auch wenn der Akku schlappmacht.</p>' +
+    (window.SKAT_SITE ? '<button type="button" class="linkbtn" data-a="legal" style="color:var(--parch-ink)">Impressum &amp; Datenschutz</button>' : '') +
     '<p class="note" style="font-family:var(--f-num);font-size:9px;letter-spacing:1px">VERSION ' + APP_VERSION + '</p>' +
     '</div></div>';
   const w = Layer.open(html);
+  const legal = $('[data-a=legal]', w);
+  if (legal) legal.addEventListener('click', () => { Sound.play('tap'); openLegal(); });
   $('[data-close]', w).addEventListener('click', () => Layer.close());
   const apply = () => {
     const p = parseInt($('#set-pferd', w).value, 10), g = parseInt($('#set-glanz', w).value, 10);

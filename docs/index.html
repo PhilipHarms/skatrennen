@@ -12,6 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Skatrennen">
+<script>window.SKAT_SITE = true;</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/favicon-96.png">
 <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
@@ -338,6 +339,8 @@ select.numin { width: 110px; font-family: var(--f-body); font-size: 17px; }
 .preview .pv-pts.pos { color: var(--green); }
 .linkbtn { background: none; border: 0; color: var(--red-2); text-decoration: underline; padding: 6px 0; font-weight: 600; align-self: flex-start; }
 .note { font-size: 15px; color: #5e4c30; margin: 0; }
+.legal p { margin: 0 0 10px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 1.45; color: var(--parch-ink); }
+.legal p:last-child { margin-bottom: 0; }
 
 .modal {
   position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -2804,6 +2807,31 @@ const TXT = {
       'Matti! Kennen wir uns nicht aus Kampen?',
       'Matteo! Ich hab da \u2019ne Frage zu dem Fonds, den du mir verkauft hast.',
       'Ahhh, der Herr Vermieter!'
+    ],
+    jonathan: [
+      'Jonathan! Ein biblischer Name. Beten hilft beim Skat aber auch nicht.',
+      'Jonathan? Der Name hat mehr Buchstaben, als du heute Spiele gewinnst.',
+      'Jonathan. Klingt nach jemandem, der beim Reizen erst mal die Regeln googelt.',
+      'Jonathan? Kurz Jonny. Und genauso kurz bleibt dein Vorsprung.'
+    ],
+    zauni: [
+      'Zauni! Servus. Hier wird Skat gespielt, nicht Schnapsen.',
+      'Zauni? Ein \u00d6sterreicher gegen lauter Piefkes. Ich halte zu den Piefkes.',
+      'Zauni ist da. Gleich wird jedes verlorene Spiel als Schm\u00e4h verkauft.',
+      'Zauni! Kleiner Hinweis: Bei uns hei\u00dft der Bube Bube. Nicht Unter.',
+      'Zauni? Sch\u00f6n. Wer verliert, bringt n\u00e4chstes Mal Kaiserschmarrn mit.'
+    ],
+    gunnar: [
+      'Gunnar? Klingt nach Wikinger. Mal sehen, wie viele Stiche du heute pl\u00fcnderst.',
+      'Gunnar! Klingt wie ein Ikea-Regal. Aufbauen dauert, und am Ende fehlt immer was.',
+      'Gunnar ist da. Pl\u00fcndern ist hier \u00fcbrigens nur mit Trumpf erlaubt.',
+      'Gunnar? Nordisches Gem\u00fct. Wenn er verliert, merkt man es nicht mal.'
+    ],
+    tine: [
+      'Tine? Klingt harmlos. Genau das ist der Trick.',
+      'Tine! Klein, aber gemein. Passt auf eure Asse auf.',
+      'Tine! Die Einzige hier, die Kontra sagt und es auch so meint.',
+      'Tine ist da. Ich lege schon mal die Krone bereit. F\u00fcr sie, nicht f\u00fcr euch.'
     ]
   },
   /* Andere Schreibweisen, die denselben Spruch bekommen */
@@ -5279,6 +5307,25 @@ function openList() {
   });
 }
 
+function openLegal() {
+  const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="legal-h">' +
+    '<div class="sheet-head"><div style="flex:1"><h2 id="legal-h">Impressum</h2><div class="sub">und Datenschutz</div></div>' +
+    '<button class="xbtn" type="button" data-close aria-label="Schlie\u00dfen">\u00d7</button></div>' +
+    '<div class="sheet-body legal">' +
+    '<div class="sec"><span class="lbl">Anbieter</span>' +
+    '<p>Philip Harms<br>c/o Afilio GmbH<br>Chausseestra\u00dfe 8<br>10115 Berlin</p>' +
+    '<p>Naunins Skatrennen ist ein privates Hobbyprojekt ohne kommerzielle Absicht.</p></div>' +
+    '<div class="sec"><span class="lbl">Datenschutz</span>' +
+    '<p><b>Verantwortlich</b> ist Philip Harms, Anschrift wie oben.</p>' +
+    '<p><b>Auf deinem Ger\u00e4t:</b> Namen, Figuren und Spielst\u00e4nde speichert die Seite nur im Speicher deines Browsers. Sie werden nicht \u00fcbertragen. L\u00f6schen kannst du sie \u00fcber \u201eGanz neu, andere Leute\u201c oder indem du die Websitedaten im Browser l\u00f6schst.</p>' +
+    '<p><b>Keine Cookies, kein Tracking, keine Werbung.</b> Schriften und Bilder liegen auf dieser Seite selbst, Inhalte von Drittanbietern werden nicht geladen.</p>' +
+    '<p><b>Hosting:</b> Die Seite liegt bei GitHub Pages (GitHub, Inc., USA). Beim Aufruf verarbeitet GitHub technisch notwendige Daten wie deine IP-Adresse in Server-Logs, auch in den USA. Rechtsgrundlage ist das berechtigte Interesse an einem sicheren Betrieb der Seite (Art. 6 Abs. 1 lit. f DSGVO). Mehr dazu steht in der Datenschutzerkl\u00e4rung von GitHub.</p>' +
+    '<p><b>Deine Rechte:</b> Du hast das Recht auf Auskunft, Berichtigung, L\u00f6schung, Einschr\u00e4nkung und Widerspruch (Art. 15 bis 21 DSGVO) sowie auf Beschwerde bei einer Datenschutz-Aufsichtsbeh\u00f6rde.</p></div>' +
+    '</div></div>';
+  const w = Layer.open(html);
+  $('[data-close]', w).addEventListener('click', () => Layer.close());
+}
+
 function openSettings() {
   const st = S.settings;
   const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-h">' +
@@ -5299,9 +5346,12 @@ function openSettings() {
     '<button type="button" class="btn dark" data-a="revanche">Neues Spiel, gleiche Runde</button>' +
     '<button type="button" class="btn red" data-a="fresh">Ganz neu, andere Leute</button></div>' +
     '<p class="note">Der Spielstand bleibt auf diesem Gerät gespeichert, auch wenn der Akku schlappmacht.</p>' +
+    (window.SKAT_SITE ? '<button type="button" class="linkbtn" data-a="legal" style="color:var(--parch-ink)">Impressum &amp; Datenschutz</button>' : '') +
     '<p class="note" style="font-family:var(--f-num);font-size:9px;letter-spacing:1px">VERSION ' + APP_VERSION + '</p>' +
     '</div></div>';
   const w = Layer.open(html);
+  const legal = $('[data-a=legal]', w);
+  if (legal) legal.addEventListener('click', () => { Sound.play('tap'); openLegal(); });
   $('[data-close]', w).addEventListener('click', () => Layer.close());
   const apply = () => {
     const p = parseInt($('#set-pferd', w).value, 10), g = parseInt($('#set-glanz', w).value, 10);

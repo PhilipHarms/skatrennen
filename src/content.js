@@ -47,6 +47,31 @@ const TXT = {
       'Matti! Kennen wir uns nicht aus Kampen?',
       'Matteo! Ich hab da \u2019ne Frage zu dem Fonds, den du mir verkauft hast.',
       'Ahhh, der Herr Vermieter!'
+    ],
+    jonathan: [
+      'Jonathan! Ein biblischer Name. Beten hilft beim Skat aber auch nicht.',
+      'Jonathan? Der Name hat mehr Buchstaben, als du heute Spiele gewinnst.',
+      'Jonathan. Klingt nach jemandem, der beim Reizen erst mal die Regeln googelt.',
+      'Jonathan? Kurz Jonny. Und genauso kurz bleibt dein Vorsprung.'
+    ],
+    zauni: [
+      'Zauni! Servus. Hier wird Skat gespielt, nicht Schnapsen.',
+      'Zauni? Ein \u00d6sterreicher gegen lauter Piefkes. Ich halte zu den Piefkes.',
+      'Zauni ist da. Gleich wird jedes verlorene Spiel als Schm\u00e4h verkauft.',
+      'Zauni! Kleiner Hinweis: Bei uns hei\u00dft der Bube Bube. Nicht Unter.',
+      'Zauni? Sch\u00f6n. Wer verliert, bringt n\u00e4chstes Mal Kaiserschmarrn mit.'
+    ],
+    gunnar: [
+      'Gunnar? Klingt nach Wikinger. Mal sehen, wie viele Stiche du heute pl\u00fcnderst.',
+      'Gunnar! Klingt wie ein Ikea-Regal. Aufbauen dauert, und am Ende fehlt immer was.',
+      'Gunnar ist da. Pl\u00fcndern ist hier \u00fcbrigens nur mit Trumpf erlaubt.',
+      'Gunnar? Nordisches Gem\u00fct. Wenn er verliert, merkt man es nicht mal.'
+    ],
+    tine: [
+      'Tine? Klingt harmlos. Genau das ist der Trick.',
+      'Tine! Klein, aber gemein. Passt auf eure Asse auf.',
+      'Tine! Die Einzige hier, die Kontra sagt und es auch so meint.',
+      'Tine ist da. Ich lege schon mal die Krone bereit. F\u00fcr sie, nicht f\u00fcr euch.'
     ]
   },
   /* Andere Schreibweisen, die denselben Spruch bekommen */

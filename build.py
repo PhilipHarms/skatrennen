@@ -75,6 +75,7 @@ head = f'''<!doctype html>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Skatrennen">
+<script>window.SKAT_SITE = true;</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="96x96" href="icons/favicon-96.png">
 <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
