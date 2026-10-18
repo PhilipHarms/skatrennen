@@ -1,0 +1,18 @@
+<html><body style="background:#2a2440;margin:0;padding:10px">
+<canvas id="c" width="1400" height="1100"></canvas>
+<script src="../src/sprites.js"></script>
+<script src="../src/engine.js"></script>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');x.imageSmoothingEnabled=false;
+x.fillStyle='#5a8f3c';x.fillRect(0,0,1400,1100);
+let S=5;
+CHARS.forEach((ch,i)=>{
+  const col=i%4,row=Math.floor(i/4);
+  const ox=col*340+10, oy=row*260+10;
+  [spriteWalk(ch.id,0),spriteWalk(ch.id,1)].forEach((s,j)=>x.drawImage(s,ox+j*90,oy,s.width*S,s.height*S));
+  [spriteRide(ch.id,0)].forEach((s,j)=>x.drawImage(s,ox+180,oy-25,s.width*S,s.height*S));
+  [spriteCrawl(ch.id,0),spriteCrawl(ch.id,1)].forEach((s,j)=>x.drawImage(s,ox+j*120,oy+125,s.width*S,s.height*S));
+});
+['idle','talk','blink','yawn','tape'].forEach((m,i)=>{const s=spriteNaunin(m);x.drawImage(s,1030+ (i%2)*180, 800+Math.floor(i/2)*0, 32*5,32*5)});
+const s=spriteNaunin('idle'); x.drawImage(s,1030,790,32*8,32*8);
+</script></body></html>

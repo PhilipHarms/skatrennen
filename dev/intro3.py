@@ -1,0 +1,18 @@
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    pg = b.new_page(viewport={'width':390,'height':844})
+    errs=[]; pg.on('pageerror', lambda e: errs.append('PAGEERR '+str(e)))
+    pg.goto('file:///home/claude/skat/dev/test.html')
+    pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(300)
+    pg.click('#intro-start'); pg.click('#intro-skip'); pg.wait_for_timeout(200)
+    pg.fill('#name-0','A'); pg.fill('#name-1','B'); pg.fill('#name-2','C')
+    for i in range(4): pg.click('#dlg-next'); pg.wait_for_timeout(150)
+    pg.wait_for_timeout(1900)
+    pg.click('#btn-enter'); pg.wait_for_timeout(150)
+    pg.click('#entry-body [data-k=player] >> nth=0'); pg.fill('#fp','36'); pg.click('#entry-ok'); pg.wait_for_timeout(300)
+    pg.click('#btn-enter'); pg.wait_for_timeout(150); pg.click('#entry-body [data-k=mode]'); pg.wait_for_timeout(100)
+    pg.click('#entry-body [data-k=player] >> nth=1'); pg.click('#entry-body [data-v="null"]'); pg.click('#entry-body [data-v="null"] >> nth=1'); pg.click('#entry-body [data-k=nres][data-v=durch]'); pg.click('#entry-ok'); pg.wait_for_timeout(300)
+    print('scores', pg.evaluate("JSON.stringify(Object.fromEntries(Object.entries(stats()).map(([k,v])=>[pname(k),v.score])))"))
+    print(errs)
+    b.close()

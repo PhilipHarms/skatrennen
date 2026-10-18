@@ -1,0 +1,3846 @@
+<title>Naunins Skatrennen 1.0</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&display=swap">
+<style>
+/* Layout: eine schmale Spalte wie ein Bierdeckel-Stapel, oben der Kiebitz, Mitte die Rennbahn, unten die Liste */
+:root {
+  --night: #15122a;
+  --night-2: #201b3d;
+  --night-3: #2e2756;
+  --line: #3d3470;
+  --ink: #1b1427;
+  --parch: #efe1bb;
+  --parch-2: #e0cc98;
+  --parch-3: #c9b27a;
+  --parch-ink: #2a1d14;
+  --gold: #f5c542;
+  --gold-2: #b9852a;
+  --red: #d63c3c;
+  --red-2: #8e2431;
+  --green: #2f8a4c;
+  --blue: #2f4aa0;
+  --text: #efe7d3;
+  --muted: #a69ec6;
+  --s-kreuz: #1b1427;
+  --s-pik: #23733f;
+  --s-herz: #d63c3c;
+  --s-karo: #e08a1c;
+  --f-display: 'Jacquard 24', 'Pixelify Sans', Georgia, serif;
+  --f-body: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --f-num: 'Press Start 2P', ui-monospace, 'Courier New', monospace;
+  --notch: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  background: var(--night);
+  color: var(--text);
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.35;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--night);
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+#app {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px 40px;
+}
+.screen { display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- Kopfzeile ---------- */
+.topbar { display: flex; align-items: center; gap: 10px; }
+.topbar h1 {
+  font-family: var(--f-display); font-weight: 400; font-size: 32px; line-height: 1;
+  margin: 0; color: var(--gold); letter-spacing: 0.5px; flex: 1; min-width: 0;
+  text-shadow: 3px 3px 0 var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar .meta { font-family: var(--f-num); font-size: 9px; color: var(--muted); white-space: nowrap; }
+.iconbtn {
+  width: 40px; height: 40px; display: grid; place-items: center; flex: none;
+  background: var(--night-3); border: 3px solid var(--ink);
+  clip-path: var(--notch); padding: 0;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.35), inset 0 3px 0 rgba(255,255,255,.08);
+}
+.iconbtn:active { transform: translateY(2px); }
+.iconbtn svg { width: 20px; height: 20px; shape-rendering: crispEdges; }
+.iconbtn[aria-pressed="false"] { opacity: .55; }
+
+/* ---------- Kiebitz-Dialogbox ---------- */
+.kiebitz {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--night-2);
+  border: 3px solid var(--parch-3);
+  box-shadow: 0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink);
+  padding: 12px;
+  clip-path: var(--notch);
+}
+.pcard {
+  --nz: 2;
+  flex: none; position: relative;
+  background: var(--parch);
+  border: 3px solid var(--ink);
+  padding: 14px 6px 4px;
+  clip-path: var(--notch);
+}
+.pcard .idx {
+  position: absolute; top: 2px; left: 5px;
+  font-family: var(--f-num); font-size: 9px; color: var(--ink); line-height: 1;
+}
+.pcard .idx b { display: block; font-size: 12px; margin-top: 2px; }
+.pcard canvas { width: calc(43px * var(--nz)); height: calc(38px * var(--nz)); }
+.speech { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.speech .who { font-family: var(--f-num); font-size: 9px; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; }
+.speech .say { margin: 0; min-height: 3.9em; font-size: 17px; color: var(--text); }
+.speech .say .cursor { display: inline-block; width: .5em; height: .9em; background: var(--gold); vertical-align: -1px; margin-left: 2px; animation: blink 0.8s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.speech .status { font-size: 14px; color: var(--muted); border-top: 2px dashed var(--line); padding-top: 6px; }
+.speech .status b { color: var(--text); font-weight: 600; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Knöpfe ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 18px;
+  background: var(--gold); color: var(--ink);
+  border: 3px solid var(--ink); clip-path: var(--notch);
+  font-weight: 700; font-size: 18px;
+  box-shadow: inset -3px -4px 0 var(--gold-2), inset 3px 3px 0 rgba(255,255,255,.45);
+}
+.btn:active { transform: translateY(2px); box-shadow: inset 3px 3px 0 var(--gold-2); }
+.btn[disabled] { filter: grayscale(.8) brightness(.7); cursor: not-allowed; transform: none; }
+.btn.dark { background: var(--night-3); color: var(--text); box-shadow: inset -3px -4px 0 rgba(0,0,0,.35), inset 3px 3px 0 rgba(255,255,255,.08); }
+.btn.red { background: var(--red); color: #fff4e0; box-shadow: inset -3px -4px 0 var(--red-2), inset 3px 3px 0 rgba(255,255,255,.3); }
+.btn.big { min-height: 58px; font-size: 21px; width: 100%; }
+.btn.small { min-height: 38px; font-size: 15px; padding: 0 12px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > .btn { flex: 1 1 0; min-width: 0; }
+
+/* ---------- Onboarding ---------- */
+.title-block { text-align: center; padding-top: 6px; }
+.title-block h1 {
+  font-family: var(--f-display); font-weight: 400; margin: 0;
+  font-size: clamp(46px, 13vw, 66px); line-height: .9; color: var(--gold);
+  text-shadow: 4px 4px 0 var(--ink), 0 0 24px rgba(245,197,66,.25);
+  text-wrap: balance;
+}
+.title-block p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.onb-body { display: flex; flex-direction: column; gap: 12px; }
+.panel {
+  background: var(--parch); color: var(--parch-ink);
+  border: 3px solid var(--ink); clip-path: var(--notch);
+  padding: 14px;
+  box-shadow: inset 0 -4px 0 var(--parch-3);
+}
+.panel h2 { font-family: var(--f-num); font-size: 11px; margin: 0 0 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--parch-ink); }
+.name-list { display: flex; flex-direction: column; gap: 8px; }
+.name-row { display: flex; gap: 8px; align-items: center; }
+.name-row .nr { font-family: var(--f-num); font-size: 10px; width: 22px; text-align: right; color: var(--gold-2); }
+.name-row input {
+  flex: 1; min-width: 0; height: 44px; padding: 0 12px;
+  background: #fff8e6; color: var(--parch-ink);
+  border: 3px solid var(--ink); font-size: 18px;
+}
+.name-row input::placeholder { color: #a8946a; }
+.xbtn { width: 44px; height: 44px; border: 3px solid var(--ink); background: var(--parch-2); color: var(--parch-ink); font-weight: 700; font-size: 20px; padding: 0; }
+.addbtn { align-self: flex-start; margin-top: 4px; background: transparent; border: 3px dashed var(--parch-3); color: var(--parch-ink); padding: 8px 14px; font-weight: 600; }
+.hint { font-size: 14px; color: #6b5838; margin: 8px 0 0; }
+
+/* Runder Tisch */
+.table-wrap { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; }
+.table-top {
+  position: absolute; inset: 22%;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,.08) 0 6px, transparent 6px 14px),
+    radial-gradient(circle at 50% 50%, #9a6238 0 55%, #7d4c2a 56% 100%);
+  border: 4px solid var(--ink); border-radius: 50%;
+  box-shadow: inset 0 0 0 6px #6a3f22;
+  display: grid; place-items: center;
+}
+.table-top svg { width: 46%; height: 46%; opacity: .7; }
+.seat {
+  position: absolute; transform: translate(-50%, -50%);
+  min-width: 84px; max-width: 120px; padding: 6px 8px;
+  background: var(--parch); color: var(--parch-ink);
+  border: 3px solid var(--ink); clip-path: var(--notch);
+  font-weight: 700; font-size: 16px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.seat .sname { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat.sel { background: var(--gold); }
+.seat .badge { font-family: var(--f-num); font-size: 8px; background: var(--ink); color: var(--gold); padding: 3px 4px; }
+.seat .pos { font-family: var(--f-num); font-size: 8px; color: #7a6440; }
+
+/* Figurenwahl */
+.fig-list { display: flex; flex-direction: column; gap: 10px; }
+.fig-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.fig-row .fsp { width: 48px; height: 60px; display: grid; place-items: end center; background: #d9c58f; border: 3px solid var(--ink); padding-bottom: 2px; }
+.fig-row .ftxt { min-width: 0; }
+.fig-row .fname { font-weight: 700; font-size: 18px; }
+.fig-row .fchar { font-family: var(--f-num); font-size: 9px; color: var(--gold-2); margin-top: 2px; }
+.fig-row .freason { font-size: 14px; color: #5e4c30; margin-top: 2px; }
+.picker { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; padding: 8px; background: #e7d6a8; border: 3px dashed var(--parch-3); }
+.pick { background: var(--parch); border: 3px solid var(--ink); padding: 6px 2px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: var(--parch-ink); line-height: 1.1; text-align: center; }
+.pick.cur { background: var(--gold); }
+.pick .taken { font-size: 10px; color: #7a6440; }
+
+/* ---------- Rennbahn ---------- */
+.race-wrap { position: relative; overflow: hidden; border: 3px solid var(--ink); background: #0e0c1f; box-shadow: 0 0 0 3px var(--line); }
+.race-wrap canvas { display: block; }
+.race-ov { position: absolute; left: 0; top: 0; pointer-events: none; }
+.flabel {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -100%);
+  display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  font-size: 13px; font-weight: 700; line-height: 1;
+  padding: 3px 5px; background: rgba(21,18,42,.82); color: var(--text);
+  border: 2px solid var(--ink);
+}
+.flabel .sc { font-family: var(--f-num); font-size: 8px; color: var(--gold); }
+.flabel .sc.neg { color: #ff8a7a; }
+.flabel.out { opacity: .55; }
+.flabel .deal { width: 9px; height: 12px; background: #fff8e6; border: 2px solid var(--ink); position: relative; flex: none; }
+.flabel .deal::after { content: ""; position: absolute; left: 1px; top: 2px; width: 3px; height: 4px; background: var(--red); }
+.bubble {
+  position: absolute; left: 0; top: 0; transform: translate(0, -100%);
+  max-width: 190px; width: max-content;
+  background: #fff8e6; color: var(--parch-ink);
+  border: 3px solid var(--ink); padding: 6px 9px;
+  font-size: 15px; line-height: 1.2; font-weight: 600;
+  animation: pop .18s steps(3) both;
+  z-index: 3;
+}
+.bubble::after {
+  content: ""; position: absolute; bottom: -9px; left: var(--ax, 50%);
+  width: 10px; height: 9px; background: var(--ink);
+  clip-path: polygon(0 0, 100% 0, 30% 100%);
+  transform: translateX(-50%);
+}
+.bubble.fade { opacity: 0; transition: opacity .4s steps(4); }
+@keyframes pop { from { transform: translate(0, -80%) scale(.6); opacity: 0; } to { transform: translate(0, -100%) scale(1); opacity: 1; } }
+
+.actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* Rangliste */
+.standings { display: flex; flex-direction: column; gap: 6px; }
+.st-row {
+  display: grid; grid-template-columns: 28px 42px 1fr auto; align-items: center; gap: 10px;
+  padding: 6px 10px; background: var(--night-2); border: 3px solid var(--ink);
+  clip-path: var(--notch);
+}
+.st-row .rk { font-family: var(--f-num); font-size: 11px; color: var(--muted); text-align: center; }
+.st-row:first-child .rk { color: var(--gold); }
+.st-row .sp { width: 40px; height: 48px; display: grid; place-items: end center; }
+.st-row .nm { min-width: 0; }
+.st-row .nm b { display: block; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-row .nm small { display: block; font-size: 13px; color: var(--muted); }
+.st-row .pts { text-align: right; font-family: var(--f-num); font-size: 14px; font-variant-numeric: tabular-nums; }
+.st-row .pts small { display: block; font-size: 9px; margin-top: 4px; color: var(--muted); }
+.st-row .pts .neg { color: #ff8a7a; }
+.st-row .pts .pos { color: #9fe08a; }
+.tag { display: inline-block; font-family: var(--f-num); font-size: 7px; padding: 2px 4px; margin-left: 4px; vertical-align: 2px; border: 2px solid var(--ink); }
+.tag.fire { background: #f08a24; color: var(--ink); }
+.tag.rain { background: #7d8ab0; color: var(--ink); }
+
+/* ---------- Sheets und Dialoge ---------- */
+.backdrop { position: fixed; inset: 0; background: rgba(8,6,20,.72); z-index: 20; }
+.sheet {
+  position: fixed; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: 100%; max-width: 560px; max-height: 92%;
+  display: flex; flex-direction: column;
+  background: var(--parch); color: var(--parch-ink);
+  border: 3px solid var(--ink); border-bottom: 0;
+  z-index: 21;
+  animation: slideup .2s steps(5) both;
+}
+@keyframes slideup { from { transform: translate(-50%, 40%); } to { transform: translate(-50%, 0); } }
+.sheet-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--parch-2); border-bottom: 3px solid var(--ink);
+}
+.sheet-head h2 { flex: 1; margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 30px; line-height: 1; }
+.sheet-head .sub { font-size: 13px; color: #6b5838; }
+.sheet-head .xbtn { flex: none; }
+.sheet-body {
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+.sheet-foot {
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--parch-2); border-top: 3px solid var(--ink);
+  display: flex; align-items: center; gap: 12px;
+}
+.sec { display: flex; flex-direction: column; gap: 8px; }
+.sec > label, .sec > .lbl { font-family: var(--f-num); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #6b5838; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 42px; padding: 4px 12px;
+  background: #fff3d6; color: var(--parch-ink);
+  border: 3px solid var(--ink); font-weight: 600; font-size: 16px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.chip small { font-family: var(--f-num); font-size: 8px; color: #8a7448; }
+.chip.on { background: var(--ink); color: var(--gold); }
+.chip.on small { color: var(--parch-3); }
+.chip.sq { min-width: 44px; justify-content: center; padding: 4px 6px; }
+.chip .sym { font-size: 20px; line-height: 1; }
+.chip.on .sym, .chip.on .sym span { color: #fff3d6 !important; }
+.typegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.typegrid .chip { flex-direction: column; justify-content: center; gap: 2px; padding: 6px 2px; min-height: 58px; }
+.sp-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sp-row .sp-l { width: 44px; font-weight: 700; }
+.numin { width: 120px; height: 44px; padding: 0 10px; border: 3px solid var(--ink); background: #fff8e6; color: var(--parch-ink); font-family: var(--f-num); font-size: 16px; }
+select.numin { width: 110px; font-family: var(--f-body); font-size: 17px; }
+.preview { flex: 1; min-width: 0; }
+.preview .pv-desc { font-size: 14px; color: #5e4c30; overflow: hidden; text-overflow: ellipsis; }
+.preview .pv-pts { font-family: var(--f-num); font-size: 20px; margin-top: 4px; }
+.preview .pv-pts.neg { color: var(--red-2); }
+.preview .pv-pts.pos { color: var(--green); }
+.linkbtn { background: none; border: 0; color: var(--red-2); text-decoration: underline; padding: 6px 0; font-weight: 600; align-self: flex-start; }
+.note { font-size: 15px; color: #5e4c30; margin: 0; }
+
+.modal {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: calc(100% - 32px); max-width: 420px; z-index: 31;
+  background: var(--night-2); color: var(--text);
+  border: 3px solid var(--parch-3); box-shadow: 0 0 0 3px var(--ink), inset 0 0 0 3px var(--ink);
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+}
+.modal .mtxt { display: flex; gap: 12px; align-items: flex-start; }
+.modal .mtxt p { margin: 0; font-size: 17px; }
+.modal-bd { z-index: 30; }
+
+/* Spielliste */
+.listwrap { overflow-x: auto; border: 3px solid var(--ink); background: #fff8e6; }
+table.liste { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.liste th, table.liste td { border-bottom: 2px solid var(--parch-2); padding: 6px 6px; text-align: right; white-space: nowrap; }
+table.liste th { position: sticky; top: 0; background: var(--parch-2); font-family: var(--f-num); font-size: 8px; text-transform: uppercase; }
+table.liste td.l, table.liste th.l { text-align: left; }
+table.liste td.nr { font-family: var(--f-num); font-size: 9px; color: #8a7448; }
+table.liste td .d { display: block; font-family: var(--f-num); font-size: 8px; }
+table.liste td .d.neg { color: var(--red-2); }
+table.liste td .d.pos { color: var(--green); }
+table.liste td .t { font-family: var(--f-num); font-size: 10px; }
+table.liste tbody tr { cursor: pointer; }
+table.liste tbody tr:hover { background: #f6e9c4; }
+table.liste tfoot td { font-family: var(--f-num); font-size: 11px; background: var(--parch-2); border-bottom: 0; }
+.desc-cell { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+
+/* Einstellungen */
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 2px dashed var(--parch-3); }
+.set-row span { min-width: 0; }
+.set-row small { display: block; color: #6b5838; font-size: 13px; }
+
+/* ---------- Podest ---------- */
+.podium-wrap { border: 3px solid var(--ink); box-shadow: 0 0 0 3px var(--line); background: #0e0c1f; }
+.podium-wrap canvas { display: block; width: 100%; }
+.urkunde {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(0,0,0,.05), transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(0,0,0,.07), transparent 45%),
+    var(--parch);
+  color: var(--parch-ink);
+  border: 3px solid var(--ink); clip-path: var(--notch);
+  padding: 18px 16px 20px; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: inset 0 0 0 5px var(--parch-2), inset 0 0 0 7px var(--parch-3);
+}
+.urkunde h2 { font-family: var(--f-display); font-weight: 400; font-size: 46px; margin: 0; text-align: center; line-height: .9; }
+.urkunde .u-sub { text-align: center; font-size: 15px; color: #5e4c30; margin-top: -4px; }
+.u-rank { display: flex; flex-direction: column; gap: 4px; }
+.u-rank .ur { display: grid; grid-template-columns: 34px 40px 1fr auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 2px dashed var(--parch-3); }
+.u-rank .ur .pl { font-family: var(--f-num); font-size: 11px; }
+.u-rank .ur .nm { font-weight: 700; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.u-rank .ur .nm small { font-weight: 400; font-size: 13px; color: #6b5838; margin-left: 4px; }
+.u-rank .ur .pt { font-family: var(--f-num); font-size: 12px; }
+.u-titles { display: flex; flex-direction: column; gap: 8px; }
+.u-titles h3, .u-rank h3 { font-family: var(--f-num); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; margin: 4px 0 2px; color: #6b5838; }
+.ut { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline; }
+.ut .tt { font-family: var(--f-display); font-size: 26px; line-height: 1; grid-column: 1 / -1; color: var(--red-2); }
+.ut .tn { font-weight: 700; }
+.ut .tl { font-size: 15px; color: #5e4c30; }
+.sig { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
+.sig .sg { font-family: var(--f-display); font-size: 28px; line-height: 1; }
+.sig small { display: block; font-size: 13px; color: #6b5838; }
+.seal { width: 58px; height: 58px; flex: none; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #e05050, #9a2030 70%); border: 3px solid var(--ink); display: grid; place-items: center; color: #3a0810; font-size: 28px; box-shadow: inset 0 0 0 4px rgba(0,0,0,.15); }
+.foot-note { text-align: center; color: var(--muted); font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble, .sheet { animation: none; }
+  .speech .say .cursor { animation: none; }
+}
+</style>
+
+<div id="app">
+
+  <!-- ===== Onboarding ===== -->
+  <section id="scr-onb" class="screen">
+    <div class="title-block">
+      <h1>Naunins Skatrennen</h1>
+      <p>Der Punktez&auml;hler f&uuml;r eure Skatrunde, reine Liste</p>
+    </div>
+    <div class="kiebitz" data-kiebitz>
+      <div class="pcard" style="--nz:2"><span class="idx">B<b>&clubs;</b></span><canvas class="px" width="43" height="38"></canvas></div>
+      <div class="speech"><div class="who">Prinz Naunin</div><p class="say" aria-hidden="true"></p><span class="sr" aria-live="polite"></span><div class="status" hidden></div></div>
+    </div>
+    <div class="onb-body" id="onb-body"></div>
+    <div class="row" id="onb-nav">
+      <button class="btn dark" id="onb-back" type="button">Zur&uuml;ck</button>
+      <button class="btn" id="onb-next" type="button">Weiter</button>
+    </div>
+  </section>
+
+  <!-- ===== Rennen ===== -->
+  <section id="scr-race" class="screen" hidden>
+    <div class="topbar">
+      <h1>Skatrennen</h1>
+      <button class="iconbtn" id="btn-list" type="button" aria-label="Spielliste"></button>
+      <button class="iconbtn" id="btn-sound" type="button" aria-label="Ton" aria-pressed="true"></button>
+      <button class="iconbtn" id="btn-mute" type="button" aria-label="Kiebitz, halt&rsquo;s Maul" aria-pressed="true"></button>
+      <button class="iconbtn" id="btn-settings" type="button" aria-label="Hausregeln"></button>
+    </div>
+    <div class="kiebitz" data-kiebitz>
+      <div class="pcard" style="--nz:1.6"><span class="idx">B<b>&clubs;</b></span><canvas class="px" width="43" height="38"></canvas></div>
+      <div class="speech"><div class="who">Prinz Naunin, Kiebitz</div><p class="say" aria-hidden="true"></p><span class="sr" aria-live="polite"></span><div class="status"></div></div>
+    </div>
+    <div class="race-wrap" id="race-wrap">
+      <canvas id="race-cv" class="px" role="img" aria-label="Rennbahn: jede Figur läuft so weit, wie ihr Punktestand reicht. Die genauen Punkte stehen in der Rangliste darunter."></canvas>
+      <div class="race-ov" id="race-ov"></div>
+    </div>
+    <div class="actions">
+      <button class="btn big" id="btn-enter" type="button">Punkte eintragen</button>
+      <div class="row">
+        <button class="btn dark" id="btn-undo" type="button">R&uuml;ckg&auml;ngig</button>
+        <button class="btn dark" id="btn-eval" type="button">Auswerten</button>
+      </div>
+    </div>
+    <div class="standings" id="standings"></div>
+  </section>
+
+  <!-- ===== Podest ===== -->
+  <section id="scr-podium" class="screen" hidden>
+    <div class="topbar"><h1>Siegerehrung</h1></div>
+    <div class="kiebitz" data-kiebitz>
+      <div class="pcard" style="--nz:1.6"><span class="idx">B<b>&clubs;</b></span><canvas class="px" width="43" height="38"></canvas></div>
+      <div class="speech"><div class="who">Prinz Naunin, Zeremonienmeister</div><p class="say" aria-hidden="true"></p><span class="sr" aria-live="polite"></span><div class="status" hidden></div></div>
+    </div>
+    <div class="podium-wrap"><canvas id="podium-cv" class="px" role="img" aria-label="Siegerpodest mit den drei Besten, der Letzte steht am Pranger"></canvas></div>
+    <div class="urkunde" id="urkunde"></div>
+    <div class="actions">
+      <button class="btn big" id="btn-revanche" type="button">Revanche, gleiche Runde</button>
+      <div class="row">
+        <button class="btn dark" id="btn-continue" type="button">Weiterspielen</button>
+        <button class="btn dark" id="btn-newround" type="button">Neue Leute</button>
+      </div>
+    </div>
+    <p class="foot-note">Tipp: Macht einen Screenshot von der Urkunde, bevor jemand Revanche ruft.</p>
+  </section>
+</div>
+
+<div id="layer"></div>
+
+<script>
+"use strict";
+/* ===== Pixel-Sprites: Vorlagen ===== */
+const SPR = {};
+
+SPR.base = {
+  o: '#1b1427', e: '#1b1427',
+  s: '#f3c99b', S: '#cf9165',
+  w: '#f4ead2', W: '#cbbd9b',
+  g: '#f5c542', G: '#b9852a',
+  b: '#4a3226', B: '#2a1c16',
+  R: '#d8343f', k: '#f4ead2',
+  n: '#9a6238', N: '#c48a55', z: '#6f6a7e', Z: '#47435a'
+};
+
+/* Farbnamen */
+SPR.suits = {
+  kreuz: { name: 'Kreuz', c: '#45425c', C: '#2a283d', m: '#1b1427', sym: '♣' },
+  pik:   { name: 'Pik',   c: '#2f8a4c', C: '#1d5a33', m: '#23733f', sym: '♠' },
+  herz:  { name: 'Herz',  c: '#d63c3c', C: '#8e2431', m: '#d63c3c', sym: '♥' },
+  karo:  { name: 'Karo',  c: '#eea02c', C: '#a8601a', m: '#e08a1c', sym: '♦' }
+};
+
+
+
+
+/* Pferd mit Schabracke, 24x16 */
+/* Kartenfiguren nach den Illustrationen: Laufen (A/B, 19x23) und Kriechen (cA/cB, 28x16) */
+SPR.cardPal = {
+  o: '#1b1427', e: '#1b1427', s: '#f3c99b', S: '#d79a6c', t: '#b8805a', q: '#ec9c88',
+  r: '#d63c3c', R: '#8e2431', b: '#2f4aa0', B: '#1e2f6e', y: '#f5c542', Y: '#b9852a',
+  w: '#f4ead2', W: '#cbbd9b', g: '#2f8a4c', G: '#1d5a33', z: '#a4a2b4', Z: '#5a5870',
+  n: '#9a6238', N: '#4a3226', T: '#fbf6ea', l: '#bfe0ff'
+};
+SPR.chars = {
+  'herz-bube': {
+    role: 'bube', h: '#a87a4a', H: '#6e4a28',
+    A: [
+      '...oo..........o...',
+      '..owwoooooooo.oyo..',
+      '.owwWwwrrrrrrooyo..',
+      'owwworrrrrryrroYo..',
+      'owwWrrrrrryryrrnoo.',
+      'oWoorrrrrRRyRrRnbbo',
+      '.o..oRRRRRRRRRynbwb',
+      '...ohhhHhhHhhoynbrb',
+      '..ohhHssssHHSoonbbo',
+      '..oHhHSYYYelYsonbo.',
+      '..ohhhStssYYSoono..',
+      '...oHhhtssRRsoono..',
+      '....ooootStoo.ono..',
+      '...ooWwWwWwWwoono..',
+      '..orbbywwwwybbrno..',
+      '..orbbywrrwybbrno..',
+      '..orbbywwwwybbrno..',
+      '..orbbywrrwybbrno..',
+      '..orbbywwwwybssno..',
+      '..osYYYYYYYYYYono..',
+      '...oooBBooBBooono..',
+      '.....oBBooBBo.ono..',
+      '....oNNNooNNNoono..'
+    ],
+    B: [
+      '...oo..........o...',
+      '..owwoooooooo.oyo..',
+      '.owwWwwrrrrrrooyo..',
+      'owwworrrrrryrroYo..',
+      'owwWrrrrrryryrrnoo.',
+      'oWoorrrrrRRyRrRnbbo',
+      '.o..oRRRRRRRRRynbwb',
+      '...ohhhHhhHhhoynbrb',
+      '..ohhHssssHHSoonbbo',
+      '..oHhHSYYYelYsonbo.',
+      '..ohhhStssYYSoono..',
+      '...oHhhtssRRsoono..',
+      '....ooootStoo.ono..',
+      '...ooWwWwWwWwoono..',
+      '..orbbywwwwybbrno..',
+      '..orbbywrrwybbrno..',
+      '..orbbywwwwybbrno..',
+      '..orbbywrrwybbrno..',
+      '..orbbywwwwybssno..',
+      '..osYYYYYYYYYYono..',
+      '...ooooBBBBoooono..',
+      '......oBBBBo..ono..',
+      '.....oNNNNNNo.ono..'
+    ],
+    cA: [
+      '..............owwoooooooo...',
+      '.............owwWwwrrrrrro..',
+      '............owwworrrrrryrro.',
+      '............owwWrrrrrryryrro',
+      '............oWoorrrrrRRyRrRo',
+      '.............o..oRRRRRRRRRyo',
+      '...............ohhhHhhHhhoyo',
+      '..............ohhHssssHHSoo.',
+      '..............oHhHSYYYelYso.',
+      '..............ohhhStssYYSo..',
+      '.....oooooooooooHhhtssRRso..',
+      'ooooorrrrryrrrrrrwwwtStoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '..............owwoooooooo...',
+      '.............owwWwwrrrrrro..',
+      '............owwworrrrrryrro.',
+      '............owwWrrrrrryryrro',
+      '............oWoorrrrrRRyRrRo',
+      '.............o..oRRRRRRRRRyo',
+      '...............ohhhHhhHhhoyo',
+      '..............ohhHssssHHSoo.',
+      '..............oHhHSYYYelYso.',
+      'o.............ohhhStssYYSo..',
+      'No...oooooooooooHhhtssRRsoo.',
+      'NBooorrrrryrrrrrrwwwtStoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'karo-bube': {
+    role: 'bube', h: '#b08a5a', H: '#7a5a34',
+    A: [
+      '...oo..........o...',
+      '..owwoooooooo.oyo..',
+      '.owwWwwrrrrrroyryo.',
+      'owwworrrrrryrryryo.',
+      'owwWrrrrrryryrryo..',
+      'oWoorrrrrRRyRrRyo..',
+      '.o..oRRRRRRRRRoyo..',
+      '....ohhhHhhsoooyYo.',
+      '...ohhsooooooooyYo.',
+      '....ohSssoZoosoyYo.',
+      '....oHStssssRooyYo.',
+      '.....ottsssRsooyYo.',
+      '.....oootStoo.oyYo.',
+      '...ooWwWwWwnwooyYo.',
+      '..obybyyyynybybyYo.',
+      '..obybyyrnyybybyYo.',
+      '..obybyyyyyybybyYo.',
+      '..obybynyryybybyYo.',
+      '..obybnyyyyybssyYo.',
+      '..osYYYYYYYYYYoyYo.',
+      '...oooBBooBBoooyYo.',
+      '.....oBBooBBo.oyYo.',
+      '....oNNNooNNNooyo..'
+    ],
+    B: [
+      '...oo..........o...',
+      '..owwoooooooo.oyo..',
+      '.owwWwwrrrrrroyryo.',
+      'owwworrrrrryrryryo.',
+      'owwWrrrrrryryrryo..',
+      'oWoorrrrrRRyRrRyo..',
+      '.o..oRRRRRRRRRoyo..',
+      '....ohhhHhhsoooyYo.',
+      '...ohhsooooooooyYo.',
+      '....ohSssoZoosoyYo.',
+      '....oHStssssRooyYo.',
+      '.....ottsssRsooyYo.',
+      '.....oootStoo.oyYo.',
+      '...ooWwWwWwnwooyYo.',
+      '..obybyyyynybybyYo.',
+      '..obybyyrnyybybyYo.',
+      '..obybyyyyyybybyYo.',
+      '..obybynyryybybyYo.',
+      '..obybnyyyyybssyYo.',
+      '..osYYYYYYYYYYoyYo.',
+      '...ooooBBBBooooyYo.',
+      '......oBBBBo..oyYo.',
+      '.....oNNNNNNo.oyo..'
+    ],
+    cA: [
+      '..............owwoooooooo.o.',
+      '.............owwWwwrrrrrroyo',
+      '............owwworrrrrryrryo',
+      '............owwWrrrrrryryrro',
+      '............oWoorrrrrRRyRrRo',
+      '.............o..oRRRRRRRRRo.',
+      '................ohhhHhhsoo..',
+      '...............ohhsooooo.o..',
+      '................ohSssoZooso.',
+      '................oHStssssRo..',
+      '.....ooooooooooooottsssRso..',
+      'ooooorrrrryrrrrrrwwwtStoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '..............owwoooooooo.o.',
+      '.............owwWwwrrrrrroyo',
+      '............owwworrrrrryrryo',
+      '............owwWrrrrrryryrro',
+      '............oWoorrrrrRRyRrRo',
+      '.............o..oRRRRRRRRRo.',
+      '................ohhhHhhsoo..',
+      '...............ohhsooooo.o..',
+      '................ohSssoZooso.',
+      'o...............oHStssssRo..',
+      'No...ooooooooooooottsssRsoo.',
+      'NBooorrrrryrrrrrrwwwtStoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'pik-bube': {
+    role: 'bube', h: '#c8a07a', H: '#9a7050',
+    A: [
+      '...............o...',
+      '..............oyo..',
+      '..............oyo..',
+      '..............oYo..',
+      '.......oooo...oyoo.',
+      '......osswso..oybbo',
+      '.....ossSsssooyybwb',
+      '....osssssssooyybob',
+      '....oSssssHHSooybbo',
+      '....osSsssesssoybo.',
+      '....osStssssSooyo..',
+      '.....ottssRRsooyo..',
+      '.....oootStoo.oyo..',
+      '...ooWwWwWwWwooyo..',
+      '..orbgyggggygbryo..',
+      '..orbgygyggygbryo..',
+      '..orbgyggggygbryo..',
+      '..orbgyggygygbryo..',
+      '..orbgyggggygzzyo..',
+      '..ozYYYYYYYYYYoyo..',
+      '...oooBBooBBoooyo..',
+      '.....oBBooBBo.oyo..',
+      '....oNNNooNNNooyo..'
+    ],
+    B: [
+      '...............o...',
+      '..............oyo..',
+      '..............oyo..',
+      '..............oYo..',
+      '.......oooo...oyoo.',
+      '......osswso..oybbo',
+      '.....ossSsssooyybwb',
+      '....osssssssooyybob',
+      '....oSssssHHSooybbo',
+      '....osSsssesssoybo.',
+      '....osStssssSooyo..',
+      '.....ottssRRsooyo..',
+      '.....oootStoo.oyo..',
+      '...ooWwWwWwWwooyo..',
+      '..orbgyggggygbryo..',
+      '..orbgygyggygbryo..',
+      '..orbgyggggygbryo..',
+      '..orbgyggygygbryo..',
+      '..orbgyggggygzzyo..',
+      '..ozYYYYYYYYYYoyo..',
+      '...ooooBBBBooooyo..',
+      '......oBBBBo..oyo..',
+      '.....oNNNNNNo.oyo..'
+    ],
+    cA: [
+      '............................',
+      '............................',
+      '............................',
+      '...................oooo.....',
+      '..................osswso..o.',
+      '.................ossSsssooyo',
+      '................osssssssooyo',
+      '................oSssssHHSoo.',
+      '................osSsssessso.',
+      '................osStssssSo..',
+      '.....ooooooooooooottssRRso..',
+      'ooooogggggyggggggwwwtStoo...',
+      'NBBBggggggyggggyggggggooooo.',
+      'NBBBGGGGGGGGGGGGGGGGGgggggso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '............................',
+      '............................',
+      '............................',
+      '...................oooo.....',
+      '..................osswso..o.',
+      '.................ossSsssooyo',
+      '................osssssssooyo',
+      '................oSssssHHSoo.',
+      '................osSsssessso.',
+      'o...............osStssssSo..',
+      'No...ooooooooooooottssRRsoo.',
+      'NBooogggggyggggggwwwtStoosso',
+      'oBBBggggggyggggyggggggggggso',
+      '.oBGGGGGGGGGGGGGGGGGGGooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'herz-dame': {
+    role: 'dame', h: '#b8925a', H: '#8a6a3a',
+    A: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.....',
+      '....oyoyoyoyyo.....',
+      '....oyyyyyyyyo.....',
+      '....oyyryyryyo.o...',
+      '....oYYYYYYYYooro..',
+      '....ohhhHhhsoorrro.',
+      '...ohhssssHHSrrRrro',
+      '....ohSsssesssrrro.',
+      '....oHSsssssSoogo..',
+      '.....osssRTTRoogoo.',
+      '......ooSSSoo.ogoGo',
+      '...ooowswswsoooggo.',
+      '..orrwwrrrrwwrggo..',
+      '..obrowrrrrworbgo..',
+      '..orrwwrrrrwwrrgo..',
+      '..oyrowrrrrworygo..',
+      '..orrwwrrrrwwssgo..',
+      '..osrrrrrrrrrrro...',
+      '.orrrrrryrrrrrro...',
+      '.orrryrrrrrryrrro..',
+      '.oRRRRRRRRRRRRRRo..'
+    ],
+    B: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.....',
+      '....oyoyoyoyyo.....',
+      '....oyyyyyyyyo.....',
+      '....oyyryyryyo.o...',
+      '....oYYYYYYYYooro..',
+      '....ohhhHhhsoorrro.',
+      '...ohhssssHHSrrRrro',
+      '....ohSsssesssrrro.',
+      '....oHSsssssSoogo..',
+      '.....osssRTTRoogoo.',
+      '......ooSSSoo.ogoGo',
+      '...ooowswswsoooggo.',
+      '..orrwwrrrrwwrggo..',
+      '..obrowrrrrworbgo..',
+      '..orrwwrrrrwwrrgo..',
+      '..oyrowrrrrworygo..',
+      '..orrwwrrrrwwssgo..',
+      '..osrrrrrrrrrrrro..',
+      '..orrrrrryrrrrrro..',
+      '..orrryrrrrrryrrro.',
+      '..oRRRRRRRRRRRRRRo.'
+    ],
+    cA: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyo..',
+      '................oyyyyyyyyo..',
+      '................oyyryyryyo..',
+      '................oYYYYYYYYoo.',
+      '................ohhhHhhsooro',
+      '...............ohhssssHHSrro',
+      '................ohSsssesssro',
+      '................oHSsssssSoo.',
+      '.....oooooooooo.oosssRTTRo..',
+      'ooooorrrrryrrrwowwowSSSoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyo..',
+      '................oyyyyyyyyo..',
+      '................oyyryyryyo..',
+      '................oYYYYYYYYoo.',
+      '................ohhhHhhsooro',
+      '...............ohhssssHHSrro',
+      '................ohSsssesssro',
+      'o...............oHSsssssSoo.',
+      'No...oooooooooo.oosssRTTRoo.',
+      'NBooorrrrryrrrwowwowSSSoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'karo-dame': {
+    role: 'dame', h: '#e0b860', H: '#b08840',
+    A: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.....',
+      '....oyoyoyoyyo.....',
+      '....oyyyyyyyyo.....',
+      '....oyyryyryyo.o...',
+      '....oYYYYYYYYooro..',
+      '...ohhssssssoorrro.',
+      '...ohsssssHHhrrRrro',
+      '..oHhsSssseshsrrro.',
+      '..oHhsSssqsshhogo..',
+      '..oHhhssssRRsHogoo.',
+      '..oHhhhoSSSoooogoGo',
+      '..oHoohswswsoooggo.',
+      '..orrwwwwrwwwrggo..',
+      '..obrowwrwwworbgo..',
+      '..orrwwwwrwwwrrgo..',
+      '..oyrowwrwwworygo..',
+      '..orrwwwwwwwwssgo..',
+      '..osrrrrrrrrrrro...',
+      '.orrrrrryrrrrrro...',
+      '.orrryrrrrrryrrro..',
+      '.oRRRRRRRRRRRRRRo..'
+    ],
+    B: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.....',
+      '....oyoyoyoyyo.....',
+      '....oyyyyyyyyo.....',
+      '....oyyryyryyo.o...',
+      '....oYYYYYYYYooro..',
+      '...ohhssssssoorrro.',
+      '...ohsssssHHhrrRrro',
+      '..oHhsSssseshsrrro.',
+      '..oHhsSssqsshhogo..',
+      '..oHhhssssRRsHogoo.',
+      '..oHhhhoSSSoooogoGo',
+      '..oHoohswswsoooggo.',
+      '..orrwwwwrwwwrggo..',
+      '..obrowwrwwworbgo..',
+      '..orrwwwwrwwwrrgo..',
+      '..oyrowwrwwworygo..',
+      '..orrwwwwwwwwssgo..',
+      '..osrrrrrrrrrrrro..',
+      '..orrrrrryrrrrrro..',
+      '..orrryrrrrrryrrro.',
+      '..oRRRRRRRRRRRRRRo.'
+    ],
+    cA: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyo..',
+      '................oyyyyyyyyo..',
+      '................oyyryyryyo..',
+      '................oYYYYYYYYoo.',
+      '...............ohhssssssooro',
+      '...............ohsssssHHhrro',
+      '..............oHhsSssseshsro',
+      '..............oHhsSssqsshho.',
+      '.....ooooooooooHhhssssRRsHo.',
+      'ooooorrrrryrrrwHhhhwSSSooo..',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyo..',
+      '................oyyyyyyyyo..',
+      '................oyyryyryyo..',
+      '................oYYYYYYYYoo.',
+      '...............ohhssssssooro',
+      '...............ohsssssHHhrro',
+      '..............oHhsSssseshsro',
+      'o.............oHhsSssqsshho.',
+      'No...ooooooooooHhhssssRRsHo.',
+      'NBooorrrrryrrrwHhhhwSSSoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'kreuz-dame': {
+    role: 'dame', h: '#8a5a34', H: '#5a3820',
+    A: [
+      '...................',
+      '...................',
+      '...................',
+      '...................',
+      '.....oo..o..o......',
+      '....orRoorooro.o...',
+      '...ogrrrgrgrgooro..',
+      '...orHssssssoorrro.',
+      '..oghsssssHHSrrRrro',
+      '..oHhsSsssesssrrro.',
+      '..oHhshHssssSoogo..',
+      '..oHhhHHHHRRsoogoo.',
+      '..oHhhhHHHHHo.ogoGo',
+      '..oHhHhswswsoooggo.',
+      '..oHhhhrrrrwwrggo..',
+      '..obrowryrrworbgo..',
+      '..orrwwrrrrwwrrgo..',
+      '..oyrowrryrworygo..',
+      '..orrwwrrrrwwssgo..',
+      '..osrrrrrrrrrrro...',
+      '.orrrrrryrrrrrro...',
+      '.orrryrrrrrryrrro..',
+      '.oRRRRRRRRRRRRRRo..'
+    ],
+    B: [
+      '...................',
+      '...................',
+      '...................',
+      '...................',
+      '.....oo..o..o......',
+      '....orRoorooro.o...',
+      '...ogrrrgrgrgooro..',
+      '...orHssssssoorrro.',
+      '..oghsssssHHSrrRrro',
+      '..oHhsSsssesssrrro.',
+      '..oHhshHssssSoogo..',
+      '..oHhhHHHHRRsoogoo.',
+      '..oHhhhHHHHHo.ogoGo',
+      '..oHhHhswswsoooggo.',
+      '..oHhhhrrrrwwrggo..',
+      '..obrowryrrworbgo..',
+      '..orrwwrrrrwwrrgo..',
+      '..oyrowrryrworygo..',
+      '..orrwwrrrrwwssgo..',
+      '..osrrrrrrrrrrrro..',
+      '..orrrrrryrrrrrro..',
+      '..orrryrrrrrryrrro.',
+      '..oRRRRRRRRRRRRRRo.'
+    ],
+    cA: [
+      '............................',
+      '............................',
+      '............................',
+      '.................oo..o..o...',
+      '................orRoorooro..',
+      '...............ogrrrgrgrgoo.',
+      '...............orHssssssooro',
+      '..............oghsssssHHSrro',
+      '..............oHhsSsssesssro',
+      '..............oHhshHssssSoo.',
+      '.....ooooooooooHhhHHHHRRso..',
+      'ooooorrrrryrrrwHhhhHHHHHo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '............................',
+      '............................',
+      '............................',
+      '.................oo..o..o...',
+      '................orRoorooro..',
+      '...............ogrrrgrgrgoo.',
+      '...............orHssssssooro',
+      '..............oghsssssHHSrro',
+      '..............oHhsSsssesssro',
+      'o.............oHhshHssssSoo.',
+      'No...ooooooooooHhhHHHHRRsoo.',
+      'NBooorrrrryrrrwHhhhHHHHHosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'pik-dame': {
+    role: 'dame', h: '#d8a860', H: '#a87838',
+    A: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.....',
+      '....oyoyoyoyyo.....',
+      '....oyyyyyyyyo.....',
+      '....oyybyybyyo.o...',
+      '....oYYYYYYYYoowo..',
+      '...ohHssssssoowwwo.',
+      '...ohsssssHHhwwywwo',
+      '..ohhsSssseshswwwo.',
+      '..ohhsSssqsshhogo..',
+      '..ohhhssssRRshogoo.',
+      '..ohhhhoSSSohhogoGo',
+      '..ohhHhswswsohoggo.',
+      '..ohhhhbbrbwwrggo..',
+      '..ohhhhbbbbworbgo..',
+      '..orrwwbbbbwwrrgo..',
+      '..oyrowbbbbworygo..',
+      '..orrwwbbbbwwssgo..',
+      '..osrrrrrrrrrrro...',
+      '.orrrrrryrrrrrro...',
+      '.orrryrrrrrryrrro..',
+      '.oRRRRRRRRRRRRRRo..'
+    ],
+    B: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.....',
+      '....oyoyoyoyyo.....',
+      '....oyyyyyyyyo.....',
+      '....oyybyybyyo.o...',
+      '....oYYYYYYYYoowo..',
+      '...ohHssssssoowwwo.',
+      '...ohsssssHHhwwywwo',
+      '..ohhsSssseshswwwo.',
+      '..ohhsSssqsshhogo..',
+      '..ohhhssssRRshogoo.',
+      '..ohhhhoSSSohhogoGo',
+      '..ohhHhswswsohoggo.',
+      '..ohhhhbbrbwwrggo..',
+      '..ohhhhbbbbworbgo..',
+      '..orrwwbbbbwwrrgo..',
+      '..oyrowbbbbworygo..',
+      '..orrwwbbbbwwssgo..',
+      '..osrrrrrrrrrrrro..',
+      '..orrrrrryrrrrrro..',
+      '..orrryrrrrrryrrro.',
+      '..oRRRRRRRRRRRRRRo.'
+    ],
+    cA: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyo..',
+      '................oyyyyyyyyo..',
+      '................oyybyybyyo..',
+      '................oYYYYYYYYoo.',
+      '...............ohHssssssoowo',
+      '...............ohsssssHHhwwo',
+      '..............ohhsSssseshswo',
+      '..............ohhsSssqsshho.',
+      '.....oooooooooohhhssssRRsho.',
+      'ooooorrrrryrrrwhhhhwSSSohho.',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyo..',
+      '................oyyyyyyyyo..',
+      '................oyybyybyyo..',
+      '................oYYYYYYYYoo.',
+      '...............ohHssssssoowo',
+      '...............ohsssssHHhwwo',
+      '..............ohhsSssseshswo',
+      'o.............ohhsSssqsshho.',
+      'No...oooooooooohhhssssRRsho.',
+      'NBooorrrrryrrrwhhhhwSSSohhso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'herz-koenig': {
+    role: 'koenig', h: '#8a6038', H: '#5a3c20',
+    A: [
+      '........oo.........',
+      '.....oooyyooo......',
+      '....oybbybbbyo.....',
+      '....oybbybbbyoo.o..',
+      '....obbbbbbbbororo.',
+      '....oyyryyryyyrrryo',
+      '....oYYYYYYYYooroo.',
+      '....ohhhhhhHo.oyo..',
+      '...oHhsooooooooyo..',
+      '...oHhSssoelosoyYo.',
+      '....ohSsssssRooyYo.',
+      '.....osssssRsooyYo.',
+      '....ooooSSSooooyYo.',
+      '...owwowwowwowwyYo.',
+      '..owowwowwowwowyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooNNNooNNNooo...'
+    ],
+    B: [
+      '........oo.........',
+      '.....oooyyooo......',
+      '....oybbybbbyo.....',
+      '....oybbybbbyoo.o..',
+      '....obbbbbbbbororo.',
+      '....oyyryyryyyrrryo',
+      '....oYYYYYYYYooroo.',
+      '....ohhhhhhHo.oyo..',
+      '...oHhsooooooooyo..',
+      '...oHhSssoelosoyYo.',
+      '....ohSsssssRooyYo.',
+      '.....osssssRsooyYo.',
+      '....ooooSSSooooyYo.',
+      '...owwowwowwowwyYo.',
+      '..owowwowwowwowyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooooNNNNNoooo...'
+    ],
+    cA: [
+      '.................oooyyooo...',
+      '................oybbybbbyo..',
+      '................oybbybbbyoo.',
+      '................obbbbbbbboro',
+      '................oyyryyryyyro',
+      '................oYYYYYYYYoo.',
+      '................ohhhhhhHo...',
+      '...............oHhsooooo.o..',
+      '...............oHhSssoeloso.',
+      '................ohSsssssRo..',
+      '.....oooooooooo.oosssssRso..',
+      'ooooorrrrryrrrwowwowSSSoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................oooyyooo...',
+      '................oybbybbbyo..',
+      '................oybbybbbyoo.',
+      '................obbbbbbbboro',
+      '................oyyryyryyyro',
+      '................oYYYYYYYYoo.',
+      '................ohhhhhhHo...',
+      '...............oHhsooooo.o..',
+      '...............oHhSssoeloso.',
+      'o...............ohSsssssRo..',
+      'No...oooooooooo.oosssssRsoo.',
+      'NBooorrrrryrrrwowwowSSSoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'karo-koenig': {
+    role: 'koenig', h: '#7a5a3a', H: '#4e3820',
+    A: [
+      '........oo.........',
+      '.....oooyyooo......',
+      '....oyrryrrryo.o...',
+      '....oyrryrrryooyo..',
+      '....orrrrrrrroyyyo.',
+      '....oyybyybyyyoboyo',
+      '....oYYYYYYYYooyoo.',
+      '....ohhhHhhso.oyo..',
+      '...ohhssssHHSooyo..',
+      '....ohSsssesssoyYo.',
+      '....oHStssssRooyYo.',
+      '.....ottsssRsooyYo.',
+      '...oooootStooooyYo.',
+      '..orwwrwwrwwrwwyYo.',
+      '..owrwwrwwrwwrwyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooNNNooNNNooo...'
+    ],
+    B: [
+      '........oo.........',
+      '.....oooyyooo......',
+      '....oyrryrrryo.o...',
+      '....oyrryrrryooyo..',
+      '....orrrrrrrroyyyo.',
+      '....oyybyybyyyoboyo',
+      '....oYYYYYYYYooyoo.',
+      '....ohhhHhhso.oyo..',
+      '...ohhssssHHSooyo..',
+      '....ohSsssesssoyYo.',
+      '....oHStssssRooyYo.',
+      '.....ottsssRsooyYo.',
+      '...oooootStooooyYo.',
+      '..orwwrwwrwwrwwyYo.',
+      '..owrwwrwwrwwrwyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooooNNNNNoooo...'
+    ],
+    cA: [
+      '.................oooyyooo...',
+      '................oyrryrrryo..',
+      '................oyrryrrryoo.',
+      '................orrrrrrrroyo',
+      '................oyybyybyyyo.',
+      '................oYYYYYYYYo..',
+      '................ohhhHhhso...',
+      '...............ohhssssHHSo..',
+      '................ohSsssessso.',
+      '................oHStssssRo..',
+      '.....ooooooooooooottsssRso..',
+      'ooooorrrrryrrrwrwwrwtStoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................oooyyooo...',
+      '................oyrryrrryo..',
+      '................oyrryrrryoo.',
+      '................orrrrrrrroyo',
+      '................oyybyybyyyo.',
+      '................oYYYYYYYYo..',
+      '................ohhhHhhso...',
+      '...............ohhssssHHSo..',
+      '................ohSsssessso.',
+      'o...............oHStssssRo..',
+      'No...ooooooooooooottsssRsoo.',
+      'NBooorrrrryrrrwrwwrwtStoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'kreuz-koenig': {
+    role: 'koenig', h: '#c09050', H: '#8a6030',
+    A: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.o...',
+      '....oyoyoyoyyooyo..',
+      '....oyyyyyyyyoyyyo.',
+      '....oyybyyryyyoboyo',
+      '....oYYYYYYYYhoyoo.',
+      '....ohhhhhhhoooyo..',
+      '...ohhssssHHSooyo..',
+      '....ohSsssesssoyYo.',
+      '....oHStssssSooyYo.',
+      '.....ottsRTTRooyYo.',
+      '....ooootStooooyYo.',
+      '...owwowwowwowwyYo.',
+      '..owowwowwowwowyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooNNNooNNNooo...'
+    ],
+    B: [
+      '...................',
+      '.....o...o..o......',
+      '....oyoooyooyo.o...',
+      '....oyoyoyoyyooyo..',
+      '....oyyyyyyyyoyyyo.',
+      '....oyybyyryyyoboyo',
+      '....oYYYYYYYYhoyoo.',
+      '....ohhhhhhhoooyo..',
+      '...ohhssssHHSooyo..',
+      '....ohSsssesssoyYo.',
+      '....oHStssssSooyYo.',
+      '.....ottsRTTRooyYo.',
+      '....ooootStooooyYo.',
+      '...owwowwowwowwyYo.',
+      '..owowwowwowwowyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooooNNNNNoooo...'
+    ],
+    cA: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyoo.',
+      '................oyyyyyyyyoyo',
+      '................oyybyyryyyo.',
+      '................oYYYYYYYYho.',
+      '................ohhhhhhhoo..',
+      '...............ohhssssHHSo..',
+      '................ohSsssessso.',
+      '................oHStssssSo..',
+      '.....oooooooooo.oottsRTTRo..',
+      'ooooorrrrryrrrwowwowtStoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................o...o..o...',
+      '................oyoooyooyo..',
+      '................oyoyoyoyyoo.',
+      '................oyyyyyyyyoyo',
+      '................oyybyyryyyo.',
+      '................oYYYYYYYYho.',
+      '................ohhhhhhhoo..',
+      '...............ohhssssHHSo..',
+      '................ohSsssessso.',
+      'o...............oHStssssSo..',
+      'No...oooooooooo.oottsRTTRoo.',
+      'NBooorrrrryrrrwowwowtStoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  },
+  'pik-koenig': {
+    role: 'koenig', h: '#d8b070', H: '#a88040',
+    A: [
+      '........oo.........',
+      '.....oooyyooo......',
+      '....oybbybbbyo.o...',
+      '....oybbybbbyooyo..',
+      '....obbbbbbbboyyyo.',
+      '....oyyryyryyyoboyo',
+      '....oYYYYYYYYhoyoo.',
+      '....ohhhhhhhoooyo..',
+      '...ohhssssHHSooyo..',
+      '....ohSsssesssoyYo.',
+      '....oHSsssssRooyYo.',
+      '.....osssssRsooyYo.',
+      '....ooooSSSooooyYo.',
+      '...owwowwowwowwyYo.',
+      '..owowwowwowwowyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooNNNooNNNooo...'
+    ],
+    B: [
+      '........oo.........',
+      '.....oooyyooo......',
+      '....oybbybbbyo.o...',
+      '....oybbybbbyooyo..',
+      '....obbbbbbbboyyyo.',
+      '....oyyryyryyyoboyo',
+      '....oYYYYYYYYhoyoo.',
+      '....ohhhhhhhoooyo..',
+      '...ohhssssHHSooyo..',
+      '....ohSsssesssoyYo.',
+      '....oHSsssssRooyYo.',
+      '.....osssssRsooyYo.',
+      '....ooooSSSooooyYo.',
+      '...owwowwowwowwyYo.',
+      '..owowwowwowwowyYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..orrRbyyYbbRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..osrRbbyYybRssyYo.',
+      '..orrRyyyyyyRrryYo.',
+      '..orrRbbyYbbRrryYo.',
+      '..oRRRRRRRRRRRRyo..',
+      '...ooooNNNNNoooo...'
+    ],
+    cA: [
+      '.................oooyyooo...',
+      '................oybbybbbyo..',
+      '................oybbybbbyoo.',
+      '................obbbbbbbboyo',
+      '................oyyryyryyyo.',
+      '................oYYYYYYYYho.',
+      '................ohhhhhhhoo..',
+      '...............ohhssssHHSo..',
+      '................ohSsssessso.',
+      '................oHSsssssRo..',
+      '.....oooooooooo.oosssssRso..',
+      'ooooorrrrryrrrwowwowSSSoo...',
+      'NBBBrrrrrryrrrryrrrrrrooooo.',
+      'NBBBRRRRRRRRRRRRRRRRRrrrrrso',
+      'NNooooooooooooooooooooooosso',
+      'oo.......................oo.'
+    ],
+    cB: [
+      '.................oooyyooo...',
+      '................oybbybbbyo..',
+      '................oybbybbbyoo.',
+      '................obbbbbbbboyo',
+      '................oyyryyryyyo.',
+      '................oYYYYYYYYho.',
+      '................ohhhhhhhoo..',
+      '...............ohhssssHHSo..',
+      '................ohSsssessso.',
+      'o...............oHSsssssRo..',
+      'No...oooooooooo.oosssssRsoo.',
+      'NBooorrrrryrrrwowwowSSSoosso',
+      'oBBBrrrrrryrrrryrrrrrrrrrrso',
+      '.oBRRRRRRRRRRRRRRRRRRRooooo.',
+      '..oooooooooooooooooooo......',
+      '............................'
+    ]
+  }
+};
+
+SPR.horse = {
+  A: [
+    '....................o.o.....',
+    '...................onono....',
+    '..................oBnnnno...',
+    '.................oBBnnenno..',
+    '.................oBnnnnnnno.',
+    '................ooBnnnnnnNo.',
+    '...............oBBnnnnooNNo.',
+    '..............oBBnnno..oo...',
+    '..owwwwwwwwwwwBBnnno........',
+    '.occcccccccccccccnno........',
+    'BoccccccccccccccccNo........',
+    'BBocccccccccccccccco........',
+    '.Bocccccccccccccccco........',
+    '..owwwwwwwwwwwwwwwwo........',
+    '...onno.........onno........',
+    '..onno...........onno.......',
+    '..onno...........onno.......',
+    '.oBBo.............oBBo......'
+  ],
+  B: [
+    '....................o.o.....',
+    '...................onono....',
+    '..................oBnnnno...',
+    '.................oBBnnenno..',
+    '.................oBnnnnnnno.',
+    '................ooBnnnnnnNo.',
+    '...............oBBnnnnooNNo.',
+    '..............oBBnnno..oo...',
+    '..owwwwwwwwwwwBBnnno........',
+    'Boccccccccccccccnnno........',
+    'BBocccccccccccccccNo........',
+    '.Bocccccccccccccccco........',
+    '..occcccccccccccccco........',
+    '..owwwwwwwwwwwwwwwwo........',
+    '....onno.....onno...........',
+    '.....onno...onno............',
+    '......onno.onno.............',
+    '......oBBo.oBBo.............'
+  ]
+};
+
+/* Prinz Naunin, Kreuz-Bube, Portrait 43x38 */
+SPR.naunin = {
+  idle: [
+    '.............oooooooooooooo.....ooyyoo.....',
+    '..........ooouuuuuuuuuuuuuuooo.oyyyyyyo....',
+    '........oouuvvvvvvvuuuuuuuuuuuooYoyyoYo....',
+    '.......ouuvvvvvvuuuuuuuuuuuuuuuuoYYYyYoo...',
+    '......ouuvuuuuuuuuuuuuuuuuuuuuuuuopPyyyYo..',
+    '......ouuuuuuuuuuuuuuUUUUUUUUUUUUopPyyyyYo.',
+    '.......oUUUUUUUUUUUUUUUUUUUUUUUUoopPyoooyYo',
+    '........ovUvUUUUUUUUUUUUUUUUUvUooypPyoooyYo',
+    '.........oohhhhhhhhhhhhhhhhhhoooyypPoooooYo',
+    '.........ohhhhhshhshhshhshhhhho.oypPoyoyoYo',
+    '.........ohhhsssssssssssssshhho..opPyyoyyYo',
+    '.........oHhhsHHHHssssHHHHshhHo..opPyyyyYo.',
+    '.........oshssoooossssoooosshSo..opPyyyYo..',
+    '.........oShsswiewssSswiewsshso..opPyYoo...',
+    '.........osHssssssssSsssssssHSo.oyyyyo.....',
+    '.........osHssssssssSsssssssHSo.oYYYYo.....',
+    '..........ossqqssssSSSsssqqsSo...opPro.....',
+    '...........ossmssssssssssmsSo....opPro.....',
+    '...........osssmTTTTTTTTmssSo....oprrro....',
+    '............osssmmmmmmmmssSo.....opRRRo....',
+    '.............ostsRRRRRRstso......oprrro....',
+    '...........ooooSststtstsSoooo....opRoRo....',
+    '.........oowwwwSSSSSSSSSSwwwwoo..opPoo.....',
+    '........oWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '........owWwwWwwWwwWwwWwwWwwWwwo.opPo......',
+    '.....ooooWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '....obrryywWWwWWwWWwWWwWWwWWwWRooopPo......',
+    '...obrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    '.oobbrryyrRryYrBYyyyyyyYBrYyrrrssSpsSo.....',
+    'orrbbrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrrSSSpSSo.....',
+    'orbbrryyrrRryYrBYyyyyyyYBrYyrrwwwwwwwwo....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrWWWWWWWWo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....'
+  ],
+  talk: [
+    '.............oooooooooooooo.....ooyyoo.....',
+    '..........ooouuuuuuuuuuuuuuooo.oyyyyyyo....',
+    '........oouuvvvvvvvuuuuuuuuuuuooYoyyoYo....',
+    '.......ouuvvvvvvuuuuuuuuuuuuuuuuoYYYyYoo...',
+    '......ouuvuuuuuuuuuuuuuuuuuuuuuuuopPyyyYo..',
+    '......ouuuuuuuuuuuuuuUUUUUUUUUUUUopPyyyyYo.',
+    '.......oUUUUUUUUUUUUUUUUUUUUUUUUoopPyoooyYo',
+    '........ovUvUUUUUUUUUUUUUUUUUvUooypPyoooyYo',
+    '.........oohhhhhhhhhhhhhhhhhhoooyypPoooooYo',
+    '.........ohhhhhshhshhshhshhhhho.oypPoyoyoYo',
+    '.........ohhhsssssssssssssshhho..opPyyoyyYo',
+    '.........oHhhsHHHHssssHHHHshhHo..opPyyyyYo.',
+    '.........oshssoooossssoooosshSo..opPyyyYo..',
+    '.........oShsswiewssSswiewsshso..opPyYoo...',
+    '.........osHssssssssSsssssssHSo.oyyyyo.....',
+    '.........osHssssssssSsssssssHSo.oYYYYo.....',
+    '..........ossqqssssSSSsssqqsSo...opPro.....',
+    '...........ossmssssssssssmsSo....opPro.....',
+    '...........osssmTTTTTTTTmssSo....oprrro....',
+    '............osssMMMMMMMMssSo.....opRRRo....',
+    '.............ostsmmmmmmstso......oprrro....',
+    '...........ooooSsRRRRRRsSoooo....opRoRo....',
+    '.........oowwwwSSSSSSSSSSwwwwoo..opPoo.....',
+    '........oWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '........owWwwWwwWwwWwwWwwWwwWwwo.opPo......',
+    '.....ooooWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '....obrryywWWwWWwWWwWWwWWwWWwWRooopPo......',
+    '...obrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    '.oobbrryyrRryYrBYyyyyyyYBrYyrrrssSpsSo.....',
+    'orrbbrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrrSSSpSSo.....',
+    'orbbrryyrrRryYrBYyyyyyyYBrYyrrwwwwwwwwo....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrWWWWWWWWo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....'
+  ],
+  blink: [
+    '.............oooooooooooooo.....ooyyoo.....',
+    '..........ooouuuuuuuuuuuuuuooo.oyyyyyyo....',
+    '........oouuvvvvvvvuuuuuuuuuuuooYoyyoYo....',
+    '.......ouuvvvvvvuuuuuuuuuuuuuuuuoYYYyYoo...',
+    '......ouuvuuuuuuuuuuuuuuuuuuuuuuuopPyyyYo..',
+    '......ouuuuuuuuuuuuuuUUUUUUUUUUUUopPyyyyYo.',
+    '.......oUUUUUUUUUUUUUUUUUUUUUUUUoopPyoooyYo',
+    '........ovUvUUUUUUUUUUUUUUUUUvUooypPyoooyYo',
+    '.........oohhhhhhhhhhhhhhhhhhoooyypPoooooYo',
+    '.........ohhhhhshhshhshhshhhhho.oypPoyoyoYo',
+    '.........ohhhsssssssssssssshhho..opPyyoyyYo',
+    '.........oHhhsHHHHssssHHHHshhHo..opPyyyyYo.',
+    '.........oshsssssssssssssssshSo..opPyyyYo..',
+    '.........oShssoooossSsoooosshso..opPyYoo...',
+    '.........osHssssssssSsssssssHSo.oyyyyo.....',
+    '.........osHssssssssSsssssssHSo.oYYYYo.....',
+    '..........ossqqssssSSSsssqqsSo...opPro.....',
+    '...........ossmssssssssssmsSo....opPro.....',
+    '...........osssmTTTTTTTTmssSo....oprrro....',
+    '............osssmmmmmmmmssSo.....opRRRo....',
+    '.............ostsRRRRRRstso......oprrro....',
+    '...........ooooSststtstsSoooo....opRoRo....',
+    '.........oowwwwSSSSSSSSSSwwwwoo..opPoo.....',
+    '........oWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '........owWwwWwwWwwWwwWwwWwwWwwo.opPo......',
+    '.....ooooWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '....obrryywWWwWWwWWwWWwWWwWWwWRooopPo......',
+    '...obrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    '.oobbrryyrRryYrBYyyyyyyYBrYyrrrssSpsSo.....',
+    'orrbbrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrrSSSpSSo.....',
+    'orbbrryyrrRryYrBYyyyyyyYBrYyrrwwwwwwwwo....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrWWWWWWWWo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....'
+  ],
+  yawn: [
+    '.............oooooooooooooo.....ooyyoo.....',
+    '..........ooouuuuuuuuuuuuuuooo.oyyyyyyo....',
+    '........oouuvvvvvvvuuuuuuuuuuuooYoyyoYo....',
+    '.......ouuvvvvvvuuuuuuuuuuuuuuuuoYYYyYoo...',
+    '......ouuvuuuuuuuuuuuuuuuuuuuuuuuopPyyyYo..',
+    '......ouuuuuuuuuuuuuuUUUUUUUUUUUUopPyyyyYo.',
+    '.......oUUUUUUUUUUUUUUUUUUUUUUUUoopPyoooyYo',
+    '........ovUvUUUUUUUUUUUUUUUUUvUooypPyoooyYo',
+    '.........oohhhhhhhhhhhhhhhhhhoooyypPoooooYo',
+    '.........ohhhhhshhshhshhshhhhho.oypPoyoyoYo',
+    '.........ohhhsssssssssssssshhho..opPyyoyyYo',
+    '.........oHhhsHHHHssssHHHHshhHo..opPyyyyYo.',
+    '.........oshsssssssssssssssshSo..opPyyyYo..',
+    '.........oShssoooossSsoooosshso..opPyYoo...',
+    '.........osHssssssssSsssssssHSo.oyyyyo.....',
+    '.........osHssssssssSsssssssHSo.oYYYYo.....',
+    '..........ossqqssssSSSsssqqsSo...opPro.....',
+    '...........ossmsmmmmmmmmsmsSo....opPro.....',
+    '...........osssmmTTTTTTmmssSo....oprrro....',
+    '............osssmMMMMMMmssSo.....opRRRo....',
+    '.............ostmMMMMMMmtso......oprrro....',
+    '...........ooooSmmmmmmmmSoooo....opRoRo....',
+    '.........oowwwwSSSSSSSSSSwwwwoo..opPoo.....',
+    '........oWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '........owWwwWwwWwwWwwWwwWwwWwwo.opPo......',
+    '.....ooooWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '....obrryywWWwWWwWWwWWwWWwWWwWRooopPo......',
+    '...obrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    '.oobbrryyrRryYrBYyyyyyyYBrYyrrrssSpsSo.....',
+    'orrbbrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrrSSSpSSo.....',
+    'orbbrryyrrRryYrBYyyyyyyYBrYyrrwwwwwwwwo....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrWWWWWWWWo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....'
+  ],
+  tape: [
+    '.............oooooooooooooo.....ooyyoo.....',
+    '..........ooouuuuuuuuuuuuuuooo.oyyyyyyo....',
+    '........oouuvvvvvvvuuuuuuuuuuuooYoyyoYo....',
+    '.......ouuvvvvvvuuuuuuuuuuuuuuuuoYYYyYoo...',
+    '......ouuvuuuuuuuuuuuuuuuuuuuuuuuopPyyyYo..',
+    '......ouuuuuuuuuuuuuuUUUUUUUUUUUUopPyyyyYo.',
+    '.......oUUUUUUUUUUUUUUUUUUUUUUUUoopPyoooyYo',
+    '........ovUvUUUUUUUUUUUUUUUUUvUooypPyoooyYo',
+    '.........oohhhhhhhhhhhhhhhhhhoooyypPoooooYo',
+    '.........ohhhhhshhshhshhshhhhho.oypPoyoyoYo',
+    '.........ohhhsssssssssssssshhho..opPyyoyyYo',
+    '.........oHhhsHHHHssssHHHHshhHo..opPyyyyYo.',
+    '.........oshssoooossssoooosshSo..opPyyyYo..',
+    '.........oShsswiewssSswiewsshso..opPyYoo...',
+    '.........osHssssssssSsssssssHSo.oyyyyo.....',
+    '.........osHssssssssSsssssssHSo.oYYYYo.....',
+    '..........ossxqssssSSSsssqxsSo...opPro.....',
+    '...........oxxxxxxxxxxxxxxxxo....opPro.....',
+    '...........oxxxxxxxxxxxxxxxxo....oprrro....',
+    '............XXXXXXXXXXXXXXXX.....opRRRo....',
+    '.............oxtsRRRRRRstxo......oprrro....',
+    '...........ooooSststtstsSoooo....opRoRo....',
+    '.........oowwwwSSSSSSSSSSwwwwoo..opPoo.....',
+    '........oWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '........owWwwWwwWwwWwwWwwWwwWwwo.opPo......',
+    '.....ooooWwwWwwWwwWwwWwwWwwWwwWo.opPo......',
+    '....obrryywWWwWWwWWwWWwWWwWWwWRooopPo......',
+    '...obrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    '.oobbrryyrRryYrBYyyyyyyYBrYyrrrssSpsSo.....',
+    'orrbbrryyrRryYrBbbbrRbbbBrYyrrrssSpsSo.....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrrSSSpSSo.....',
+    'orbbrryyrrRryYrBYyyyyyyYBrYyrrwwwwwwwwo....',
+    'orbbrryyrrRryYrBbbbrRbbbBrYyrrWWWWWWWWo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....',
+    'obbrryyrrbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBbbbrRbbbBrYyrrrrrrrrrRo....',
+    'obrryyrrbbRryYrBYyyyyyyYBrYyrrrrrrrrrRo....'
+  ]
+};
+SPR.nauninPal = {
+  o: '#1b1427', e: '#1b1427', s: '#f3c99b', S: '#d79a6c', t: '#c98d63', h: '#d4863a', H: '#9a5424',
+  u: '#2f4aa0', U: '#1e2f6e', v: '#4a6ad0', w: '#f4ead2', W: '#cbbd9b', r: '#d63c3c', R: '#8e2431',
+  y: '#f5c542', Y: '#b9852a', b: '#2f4aa0', B: '#1e2f6e', p: '#a8703e', P: '#6a4222', i: '#3f86e0',
+  m: '#5a1420', M: '#8e2431', T: '#fbf6ea', q: '#ec9c88', x: '#e2dccb', X: '#b8b09a'
+};
+
+SPR.zombiePal = { s: '#93c46c', S: '#5f8f48', e: '#ff4a4a', h: '#4b5a3a', r: '#4b5a3a' };
+
+/* ===== Sprite-Engine ===== */
+const ROLE_NAME = { bube: 'Bube', dame: 'Dame', koenig: 'König' };
+const CHARS = ['herz-bube', 'karo-bube', 'pik-bube', 'herz-dame', 'karo-dame', 'kreuz-dame', 'pik-dame',
+  'herz-koenig', 'karo-koenig', 'kreuz-koenig', 'pik-koenig'].map(id => {
+  const [suit, role] = id.split('-');
+  return { id, suit, role };
+});
+const CHAR_BY_ID = Object.fromEntries(CHARS.map(c => [c.id, c]));
+function charName(id) {
+  const c = CHAR_BY_ID[id];
+  return c ? SPR.suits[c.suit].name + '-' + ROLE_NAME[c.role] : '';
+}
+
+function mixHex(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
+  const g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
+  const bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+}
+
+/* Palette einer Figur, wahlweise als Zombie */
+function charPalette(chId, zombie) {
+  const d = SPR.chars[chId];
+  const p = Object.assign({}, SPR.cardPal, { h: d.h, H: d.H });
+  if (zombie) {
+    for (const k of Object.keys(p)) if (k !== 'o') p[k] = mixHex(p[k], '#5a6450', 0.45);
+    Object.assign(p, { s: '#93c46c', S: '#5f8f48', t: '#4f7a3a', q: '#93c46c', e: '#ff4a4a' });
+    p.h = mixHex(d.h, '#4b5a3a', 0.6); p.H = mixHex(d.H, '#3a4a2a', 0.6);
+  }
+  return p;
+}
+
+function newCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  return c;
+}
+
+function drawRows(ctx, rows, pal, ox, oy) {
+  for (let y = 0; y < rows.length; y++) {
+    const row = rows[y];
+    for (let x = 0; x < row.length; x++) {
+      const k = row[x];
+      if (k === '.' || k === ' ') continue;
+      const col = pal[k];
+      if (!col) continue;
+      ctx.fillStyle = col;
+      ctx.fillRect(ox + x, oy + y, 1, 1);
+    }
+  }
+}
+
+const spriteCache = new Map();
+function cached(key, fn) {
+  let v = spriteCache.get(key);
+  if (!v) { v = fn(); spriteCache.set(key, v); }
+  return v;
+}
+
+/* Laufende Figur 19x23 */
+function spriteWalk(chId, frame, zombie) {
+  return cached('w|' + chId + '|' + frame + '|' + (zombie ? 1 : 0), () => {
+    const d = SPR.chars[chId];
+    const rows = frame === 0 ? d.A : d.B;
+    const cv = newCanvas(rows[0].length, rows.length), ctx = cv.getContext('2d');
+    drawRows(ctx, rows, charPalette(chId, !!zombie), 0, 0);
+    return cv;
+  });
+}
+
+/* Reiter auf Pferd 31x28, Schabracke in Farbe der Farbe */
+function spriteRide(chId, frame) {
+  return cached('r|' + chId + '|' + frame, () => {
+    const ch = CHAR_BY_ID[chId], d = SPR.chars[chId];
+    const cv = newCanvas(31, 28), ctx = cv.getContext('2d');
+    const red = ch.suit === 'herz' || ch.suit === 'karo';
+    const hp = Object.assign({}, SPR.base, red ? { c: '#d63c3c', C: '#8e2431' } : { c: '#2f4aa0', C: '#1e2f6e' });
+    drawRows(ctx, frame === 0 ? SPR.horse.A : SPR.horse.B, hp, 3, 10);
+    const pal = charPalette(chId, false);
+    const dy = frame === 0 ? 0 : 1;
+    drawRows(ctx, d.A.slice(0, 20), pal, 0, dy);
+    /* Bein am Pferd */
+    ctx.fillStyle = pal.o; ctx.fillRect(7, 19 + dy, 4, 6);
+    ctx.fillStyle = pal.B; ctx.fillRect(8, 19 + dy, 2, 4);
+    ctx.fillStyle = pal.N; ctx.fillRect(8, 23 + dy, 3, 1);
+    return cv;
+  });
+}
+
+/* Kriechender Zombie 28x16 */
+function spriteCrawl(chId, frame) {
+  return cached('c|' + chId + '|' + frame, () => {
+    const d = SPR.chars[chId];
+    const rows = frame === 0 ? d.cA : d.cB;
+    const cv = newCanvas(rows[0].length, rows.length), ctx = cv.getContext('2d');
+    drawRows(ctx, rows, charPalette(chId, true), 0, 0);
+    return cv;
+  });
+}
+
+/* Silhouette für Leuchten */
+function silhouette(src, color) {
+  return cached('sil|' + color + '|' + (src._id || (src._id = Math.random().toString(36).slice(2))), () => {
+    const cv = newCanvas(src.width, src.height), ctx = cv.getContext('2d');
+    ctx.drawImage(src, 0, 0);
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    return cv;
+  });
+}
+
+/* Naunin-Portrait mit Mimik: 'idle' | 'talk' | 'blink' | 'yawn' | 'tape' */
+function spriteNaunin(mood) {
+  return cached('n|' + mood, () => {
+    const rows = SPR.naunin[mood] || SPR.naunin.idle;
+    const cv = newCanvas(rows[0].length, rows.length), ctx = cv.getContext('2d');
+    drawRows(ctx, rows, SPR.nauninPal, 0, 0);
+    return cv;
+  });
+}
+
+/* ===== Skat-Regeln und Wertung (reine Liste) ===== */
+const GRUND = { karo: 9, herz: 10, pik: 11, kreuz: 12, grand: 24 };
+const NULLSPIELE = {
+  null: { wert: 23, name: 'Null' },
+  hand: { wert: 35, name: 'Null Hand' },
+  ouvert: { wert: 46, name: 'Null ouvert' },
+  ouvertHand: { wert: 59, name: 'Null ouvert Hand' }
+};
+const REIZWERTE = [18, 20, 22, 23, 24, 27, 30, 33, 35, 36, 40, 44, 45, 46, 48, 50, 54, 55, 59, 60,
+  63, 66, 70, 72, 77, 80, 81, 84, 88, 90, 96, 99, 100, 108, 110, 117, 120, 121, 126, 130, 132,
+  135, 140, 143, 144, 150, 153, 154, 156, 160, 162, 165, 168, 170, 176, 180, 187, 192, 198,
+  204, 216, 240, 264];
+const SUIT_LABEL = { karo: 'Karo', herz: 'Herz', pik: 'Pik', kreuz: 'Kreuz' };
+
+/*
+ * Ein Spiel g:
+ *  type: 'farbe' | 'grand' | 'null' | 'ramsch' | 'pass' | 'frei'
+ *  player: Spieler-ID (Alleinspieler, Ramsch-Verlierer/Durchmarschierer, frei)
+ *  suit, spitzen (1..11), mit (bool), hand, achieved (0/1 Schneider/2 Schwarz),
+ *  announced (0 keine/1 Schneider/2 Schwarz/3 Ouvert), nullVar, won, overbid, reiz,
+ *  kontra (0/1 Kontra/2 Re), bock, ramschPts, durchmarsch, freiPts
+ */
+function calcGame(g) {
+  const r = { points: 0, value: 0, stufen: 0, grund: 0, desc: '', formula: '', valid: false, overbid: false };
+  if (!g || !g.type) return r;
+  const mult = (g.kontra === 2 ? 4 : g.kontra === 1 ? 2 : 1) * (g.bock ? 2 : 1);
+  const multTxt = (g.kontra === 2 ? ' × 4 Re' : g.kontra === 1 ? ' × 2 Kontra' : '') + (g.bock ? ' × 2 Bock' : '');
+
+  if (g.type === 'pass') {
+    r.valid = true; r.desc = 'Eingepasst'; r.formula = 'Keine Punkte, neu geben';
+    return r;
+  }
+  if (g.type === 'frei') {
+    const p = Math.round(Number(g.freiPts) || 0);
+    r.valid = !!g.player && p !== 0;
+    r.points = p; r.value = Math.abs(p);
+    r.desc = g.manual ? 'Manuell' : 'Freie Eingabe'; r.formula = (p > 0 ? '+' : '\u2212') + Math.abs(p);
+    return r;
+  }
+  if (g.type === 'ramsch') {
+    const bockF = g.bock ? 2 : 1;
+    if (g.durchmarsch) {
+      r.points = 120 * bockF; r.value = 120;
+      r.desc = 'Ramsch, Durchmarsch';
+      r.formula = 'Durchmarsch 120' + (g.bock ? ' × 2 Bock' : '');
+      r.valid = !!g.player;
+    } else {
+      const p = Math.abs(Math.round(Number(g.ramschPts) || 0));
+      r.points = -p * bockF; r.value = p;
+      r.desc = 'Ramsch';
+      r.formula = 'Ramsch −' + p + (g.bock ? ' × 2 Bock' : '');
+      r.valid = !!g.player && p > 0;
+    }
+    return r;
+  }
+  if (g.type === 'null') {
+    const nv = NULLSPIELE[g.nullVar];
+    if (!nv) return r;
+    if (g.durchmarsch) {
+      r.value = 120; r.desc = nv.name + ', Durchmarsch';
+      r.points = 120 * mult;
+      r.formula = 'Durchmarsch 120' + multTxt;
+      r.valid = !!g.player;
+      return r;
+    }
+    r.value = nv.wert; r.desc = nv.name;
+    r.points = (g.won ? 1 : -2) * nv.wert * mult;
+    r.formula = nv.wert + multTxt + (g.won ? '' : ' × −2 verloren');
+    r.valid = !!g.player && typeof g.won === 'boolean';
+    return r;
+  }
+  /* Farbspiel oder Grand */
+  const grund = g.type === 'grand' ? GRUND.grand : GRUND[g.suit];
+  if (!grund || !g.spitzen || typeof g.mit !== 'boolean') return r;
+  const maxSp = g.type === 'grand' ? 4 : 11;
+  const spitzen = Math.max(1, Math.min(maxSp, g.spitzen));
+  const ann = g.hand ? (g.announced || 0) : 0;
+  const ach = g.achieved || 0;
+  const parts = [];
+  let stufen = spitzen + 1; // Spitzen + Spiel
+  parts.push((g.mit ? 'mit ' : 'ohne ') + spitzen);
+  if (g.hand) { stufen++; parts.push('Hand'); }
+  if (ach >= 1 || ann >= 1) { stufen++; parts.push('Schneider'); }
+  if (ann >= 1) { stufen++; parts.push('angesagt'); }
+  if (ach >= 2 || ann >= 2) { stufen++; parts.push('Schwarz'); }
+  if (ann >= 2) { stufen++; parts.push('angesagt'); }
+  if (ann >= 3) { stufen++; parts.push('ouvert'); }
+  let value = stufen * grund;
+  let won = !!g.won;
+  if (g.overbid && g.reiz && g.reiz > value) {
+    value = Math.ceil(g.reiz / grund) * grund;
+    won = false;
+    r.overbid = true;
+  }
+  r.value = value; r.stufen = stufen; r.grund = grund;
+  r.points = (won ? 1 : -2) * value * mult;
+  const name = g.type === 'grand' ? 'Grand' : SUIT_LABEL[g.suit];
+  const dp = [(g.mit ? 'mit ' : 'ohne ') + spitzen];
+  if (g.hand && ann < 3) dp.push('Hand');
+  if (ann === 2) dp.push('Schwarz angesagt');
+  else if (ann === 1) { dp.push('Schneider angesagt'); if (ach >= 2) dp.push('Schwarz'); }
+  else if (ann === 0) { if (ach >= 2) dp.push('Schwarz'); else if (ach === 1) dp.push('Schneider'); }
+  r.desc = (ann === 3 ? name + ' ouvert ' : name + ' ') + dp.join(', ');
+  r.formula = r.overbid
+    ? 'überreizt (' + g.reiz + ') → ' + value + multTxt + ' × −2'
+    : stufen + ' × ' + grund + ' = ' + value + multTxt + (won ? '' : ' × −2 verloren');
+  r.won = won;
+  r.valid = !!g.player && typeof g.won === 'boolean';
+  return r;
+}
+
+/* Wer gibt, wer spielt, wer setzt aus */
+function seatInfo(n, startDealer, gameIndex) {
+  const d = ((startDealer + gameIndex) % n + n) % n;
+  const active = [(d + 1) % n, (d + 2) % n, (d + 3) % n];
+  const out = [];
+  for (let i = 0; i < n; i++) if (!active.includes(i)) out.push(i);
+  return { dealer: d, active, out };
+}
+
+/* Ob ein Spiel für den Spieler als gewonnen zählt (für Serien und Titel) */
+function gameOutcome(g, res) {
+  if (g.type === 'pass') return 0;
+  if (g.type === 'frei') return g.manual ? Math.sign(res.points) : 0;
+  if (g.type === 'ramsch') return g.durchmarsch ? 1 : -1;
+  return res.points > 0 ? 1 : -1;
+}
+
+/* Spielstand und Statistik aus der Historie */
+function computeStats(players, games) {
+  const st = {};
+  for (const p of players) st[p.id] = {
+    score: 0, played: 0, won: 0, lost: 0, grands: 0, nullLost: 0, nullWon: 0, overbid: 0,
+    ramschLost: 0, durchmarsch: 0, best: null, min: 0, streak: 0, deals: 0, lastDelta: 0
+  };
+  games.forEach((g, i) => {
+    if (g.dealerId && st[g.dealerId]) st[g.dealerId].deals++;
+    const res = calcGame(g);
+    const s = st[g.player];
+    if (!s) return;
+    s.score += res.points;
+    s.lastDelta = res.points;
+    s.min = Math.min(s.min, s.score);
+    const out = gameOutcome(g, res);
+    if (g.type === 'farbe' || g.type === 'grand' || g.type === 'null' || (g.type === 'frei' && g.manual)) {
+      s.played++;
+      if (out > 0) s.won++; else s.lost++;
+      if (g.type === 'grand' && out > 0) s.grands++;
+      if (g.type === 'null') { if (out > 0) s.nullWon++; else s.nullLost++; if (g.durchmarsch) s.durchmarsch++; }
+      if (res.overbid) s.overbid++;
+      if (out > 0 && (!s.best || res.points > s.best.points)) s.best = { points: res.points, desc: g.type === 'frei' ? '' : res.desc, nr: i + 1 };
+    }
+    if (g.type === 'ramsch') { if (g.durchmarsch) s.durchmarsch++; else s.ramschLost++; }
+    if (out > 0) s.streak = s.streak > 0 ? s.streak + 1 : 1;
+    else if (out < 0) s.streak = s.streak < 0 ? s.streak - 1 : -1;
+  });
+  return st;
+}
+
+function tierOf(score, settings) {
+  if (score < 0) return 'zombie';
+  if (score >= settings.glanz) return 'glow';
+  if (score >= settings.pferd) return 'ride';
+  return 'walk';
+}
+
+
+
+/* ===== Texte: Prinz Naunin (Kiebitz) und die Figuren ===== */
+const TXT = {
+  intro: [
+    'Ah. Besuch. Ich bin Prinz Naunin, Kreuz-Bube und höchster Trumpf im ganzen Blatt.',
+    'Ich schaue euch heute beim Skat über die Schulter. Ungefragt. Man nennt das Kiebitz.',
+    'Keine Sorge, ich zähle mit. Ihr sollt euch ja aufs Verlieren konzentrieren können.'
+  ],
+  names: 'Wer sitzt am Tisch? Mindestens drei. Wenn ihr mehr seid, setzt der Geber aus, wie es sich gehört.',
+  namesWarn: {
+    few: 'Drei. Mindestens drei. Ich kann ja nicht mitspielen, so gern ich würde.',
+    dup: 'Zwei Leute mit demselben Namen? Gebt euch Spitznamen. Gemeine, bitte.'
+  },
+  seats: 'Jetzt die Sitzordnung, im Uhrzeigersinn. Tippt zwei an, um sie zu tauschen.',
+  dealer: 'Und wer gibt zuerst? Danach geht es reihum im Uhrzeigersinn.',
+  dealerPicked: '{dealer} gibt zuerst. Vorhand ist dann {vh}. Mischen nicht vergessen.',
+  figures: 'Jeder bekommt eine Figur. Ich habe nach Gutdünken verteilt. Beschwerden nehme ich nicht an. Tauschen dürft ihr trotzdem.',
+  start: 'Gut. Möge der Bessere gewinnen. Also ich. Aber ich spiele ja nicht.',
+  welcomeBack: [
+    'Ah, ihr seid zurück. Ich habe alles behalten. Leider auch eure Fehler.',
+    'Weiter geht’s. Ich habe die Punkte bewacht. Keiner hat geschummelt. Glaube ich.'
+  ],
+
+  roleReason: {
+    bube: ['Bube. Zählt zwei Augen, sticht aber fast alles. Wie ich, nur schlechter.', 'Bube. Fast so wichtig wie ich. Fast.'],
+    dame: ['Dame. Zählt drei Augen, sieht dafür gut aus.', 'Dame. Beim Skat unterschätzt, wie im echten Leben.'],
+    koenig: ['König. Vier Augen wert, mehr erwartet auch keiner.', 'König. Viel Krone, wenig Trumpf.']
+  },
+  suitReason: {
+    kreuz: 'Kreuz, meine Farbe. Benimm dich.',
+    pik: 'Pik, grün wie die Hoffnung auf einen Sieg.',
+    herz: 'Herz, weil du so ein gutes hast. Angeblich.',
+    karo: 'Karo, die kleinste Farbe. Irgendwer muss sie ja nehmen.'
+  },
+
+  dealerLine3: ['{dealer} gibt. Und mischt bitte, als ginge es um etwas.', '{dealer} gibt. Achtzehn, zwanzig, ihr wisst Bescheid.', '{dealer} gibt. Ich schaue genau hin.'],
+  dealerLineN: ['{dealer} gibt, {out} schaut zu und hält hoffentlich den Mund. Das ist mein Job.', '{dealer} gibt. {out} setzt aus und darf mir Gesellschaft leisten.', '{dealer} gibt, {out} hat Pause. Glückwunsch, da kann man nichts verlieren.'],
+
+  naunin: {
+    wonMit: ['Mit mir an der Spitze gewinnt man eben. Gern geschehen, {name}.', '{name} hatte mich auf der Hand. Da kann ja nichts schiefgehen.', 'Kreuz-Bube auf der Hand, Sieg in der Tasche. Ich wiederhole mich, ich weiß.'],
+    wonOhne: ['Ohne mich gewonnen. Das nehme ich persönlich.', '{name} gewinnt ohne den Kreuz-Buben. Glück ist keine Strategie.', 'Ohne mich. Ich bin nicht beleidigt. Ein bisschen.'],
+    lostMit: ['Mich auf der Hand und trotzdem verloren. Ich schäme mich für dich, {name}.', 'Der höchste Trumpf war bei dir, {name}. Der Verstand offenbar nicht.'],
+    lostOhne: ['Ohne mich verloren. Überraschung: keine.', '{name} spielt ohne mich und verliert. Ich sag ja nichts. Ich denk’s nur.', 'Ohne den Alten verloren. Wer hätte das gedacht. Ich.'],
+    grandWon: ['Ein Grand, {pts} Punkte. Und wer ist der höchste Bube im Grand? Richtig.', 'Grand gewonnen. {name} darf heute aufrecht gehen.'],
+    grandLost: ['Grand verloren. Große Oper, kleines Publikum.', '{name} spielt Grand und verliert {abs}. Größenwahn ist auch eine Leistung.'],
+    nullWon: ['Null gewonnen. Das Spiel für Leute, die gern nichts haben.', '{name} bekommt nichts und freut sich. Bescheidenheit, die sich lohnt.'],
+    nullLost: ['Null verloren. Ein Stich zu viel, {abs} Punkte zu wenig.', 'Beim Null ist ein Stich einer zu viel. Hat dir das keiner gesagt, {name}?'],
+    nullOuvertLost: ['Null ouvert verloren. Alle haben deine Karten gesehen. Und gelacht.'],
+    overbid: ['Passe ist übrigens auch ein Wort. Und es kostet nichts.', '{name} hat bis {reiz} gereizt. Mit dem Blatt. Mutig.', 'Überreizt. Gier frisst Hirn, wie man bei Hofe sagt.'],
+    schwarzWon: ['Schwarz! Die anderen haben ihre Karten nur zum Festhalten bekommen.'],
+    schneiderWon: ['Schneider. Die Gegenspieler sollten über einen Berufswechsel nachdenken.', 'Unter dreißig Augen für die Gegner. Das gibt Gerede im Dorf.'],
+    schneiderLost: ['{name} wurde selbst geschneidert. Das ist eine ganz eigene Kunst.'],
+    handWon: ['Hand gespielt und gewonnen. Den Skat brauchte {name} nicht. Mich schon.', 'Ohne Skataufnahme gewonnen. Ich bin beeindruckt. Steht so im Protokoll.'],
+    handLost: ['Hand gespielt, Hand vor die Stirn.', 'Ein Blick in den Skat hätte geholfen, {name}. Nur so ein Gedanke.'],
+    kontraWon: ['Kontra gegen {name}, und {name} gewinnt trotzdem. Das hat sich f\u00fcr die anderen nicht gelohnt.', 'Kontra gesagt, Lehrgeld bezahlt. So mag ich das.'],
+    kontraLost: ['Kontra! Und {name} hat es verdient.', 'Wer Kontra kriegt, sollte zuhören. {name} hat nicht zugehört.'],
+    re: ['Re! Jetzt wird’s persönlich.'],
+    bock: ['Bock! Doppelt hält besser. Oder tut doppelt weh.'],
+    ramsch: ['Ramsch. Wenn keiner will, verlieren alle. {name} am meisten.', '{name} hat beim Ramsch alles eingesammelt. Auch die Schande.', 'Ramsch. {abs} Augen für {name}. Ich hätte geschoben.'],
+    durchmarsch: ['Durchmarsch! {name} hat alle Stiche. So sieht Tyrannei aus. Ich bin beeindruckt.'],
+    nullDurchmarsch: ['Null angesagt und alle Stiche geholt. Konsequent falsch und trotzdem 120 Punkte.', '{name} wollte keinen Stich und hat alle bekommen. Durchmarsch! Ich verstehe die Welt nicht mehr.'],
+    pass: ['Alle passen. Ritter waren auch schon mal mutiger.', 'Eingepasst. Keiner traut sich. Ich hätte gespielt. Ich spiele immer.', 'Eingepasst. Ich notiere: Feigheit, einstimmig.'],
+    frei: ['Freie Eingabe. Ich frag lieber nicht, wofür.', 'Hausregel, nehme ich an. Ich schreib’s auf und denke mir meinen Teil.'],
+    bigWon: ['{pts} Punkte. Bringt mir einen Stuhl. Einen vergoldeten.', '{pts} für {name}. Das gibt ein Lied. Ein schlechtes, aber immerhin.'],
+    bigLost: ['Minus {abs}. Das hört man bis in den Burggraben.', '{name} verliert {abs}. Ich lasse schon mal ein Grab ausheben.'],
+    won: ['{name} gewinnt {pts}. Ich hätte mehr rausgeholt. Aber gut.', '+{pts} für {name}. Ordentlich. Langweilig, aber ordentlich.'],
+    lost: ['{name} verliert {abs}. Ich notiere: Mut ja, Verstand nein.', 'Minus {abs} für {name}. Das wird ein langer Abend.'],
+    ride: ['{name} reitet jetzt. Frag nicht, wo das Pferd herkommt.', '{name} sitzt hoch zu Ross. Hochmut kommt vor dem Fall, sagt man bei Hofe.'],
+    unride: ['{name} hat das Pferd verloren. Es ist zu jemand Vernünftigerem gelaufen.'],
+    glow: ['{name} leuchtet. Entweder Ruhm oder Fieber.', '{name} strahlt. Ich finde das übertrieben.'],
+    zombie: ['{name} kriecht jetzt. Willkommen im Sumpf.', '{name} ist im Minus und damit offiziell untot.'],
+    unzombie: ['{name} ist von den Toten auferstanden. Wer hat das erlaubt?', '{name} kriecht aus dem Sumpf. Bitte die Füße abtreten.'],
+    fire: ['Drei in Folge. {name} brennt. Jemand sollte löschen.', '{name} ist heiß gelaufen. Ich meine das spielerisch.'],
+    cloud: ['Drei verloren in Folge. Über {name} regnet es. Nur über {name}.', '{name} hat jetzt eine eigene Regenwolke. Die geht so schnell nicht weg.'],
+    late: ['Nach elf. Ich bin ein Bube, keine Eule.', 'Es ist spät. Die Könige gähnen schon.', 'Mitternacht naht. Um diese Zeit reizt man nur noch aus Trotz.'],
+    undo: ['Rückgängig. Wenn das im echten Leben auch ginge.', 'Gestrichen. Ich hab’s trotzdem gesehen.'],
+    edited: ['Nachträglich korrigiert. Ich sag nichts. Ich schreib’s nur auf.'],
+    muteOn: 'Na schön. Ich halte den Mund.',
+    muteOff: 'Da bin ich wieder. Hab ich was verpasst? Bestimmt was Peinliches.'
+  },
+
+  fig: {
+    winSmall: ['Kleinvieh macht auch Mist.', 'Läuft. Langsam, aber es läuft.', 'Ein Sieg ist ein Sieg.', 'Bescheiden gewonnen ist auch gewonnen.'],
+    winMid: ['Das war Können.', 'Ich hab’s euch ja gesagt.', 'Schreibt das auf. Groß.', 'Wer schreibt, der bleibt.'],
+    winBig: ['Verneigt euch.', 'Das gibt ein Denkmal.', 'Ich nehme Glückwünsche in bar.', 'Merkt euch diesen Moment.'],
+    grand: ['Grand! Vier Buben, ein Plan.', 'Grand. Farbe ist was für Anfänger.'],
+    hand: ['Den Skat brauch ich nicht.', 'Ohne Skat, mit Stil.'],
+    schneider: ['Geschneidert! Maß genommen, fertig.', 'Unter dreißig. Schämt euch ein bisschen.'],
+    schwarz: ['Schwarz! Nicht ein Stich für euch.', 'Alle Stiche. Alle.'],
+    nullWin: ['Nichts genommen, alles gewonnen.', 'Null Stiche, volles Genie.'],
+    nullOuvertWin: ['Hosen runter und trotzdem gewonnen.', 'Offen gespielt, nichts zu verbergen.'],
+    kontraWin: ['Kontra? Danke für die Extrapunkte.', 'Wer Kontra sagt, muss auch zahlen.'],
+    lose: ['Das war Taktik.', 'Ich wollte euch nur in Sicherheit wiegen.', 'Rückwärts ist auch eine Richtung.', 'Zählt das wirklich?', 'Die Karten waren gegen mich.', 'Nächstes Mal. Ganz bestimmt.'],
+    loseBig: ['Ich brauche einen Moment.', 'Das war teuer.', 'Kann man das rückgängig machen? Ach so.'],
+    grandLose: ['Vier Buben im Kopf, keiner in der Hand.', 'Großer Name, kleines Ergebnis.'],
+    handLose: ['Hätte ich mal in den Skat geschaut.', 'Hand gespielt. Hand vor die Stirn.'],
+    nullLose: ['Null gespielt. Null verstanden.', 'Einen Stich. Einen einzigen.', 'Ausgerechnet die Sieben.'],
+    nullOuvertLose: ['Hosen runter, und alle haben gelacht.', 'Offen verloren. Jetzt wissen es alle.'],
+    overbid: ['Bei 18 hätte ich aufhören sollen.', 'Ich hab mich verzählt. Absichtlich.', 'Reizen ist ein Gefühl. Meins war falsch.'],
+    schneiderLose: ['Selbst geschneidert. Sitzt aber nicht.', 'Unter dreißig. Bitte nicht weitererzählen.'],
+    kontraLose: ['Kontra gehört. Nicht zugehört.', 'Das Kontra war berechtigt. Leider.'],
+    ramsch: ['Alles mitgenommen. Leider auch die Augen.', 'Ich sammle halt gern.', 'Ramsch ist kein Spiel. Ramsch ist eine Strafe.'],
+    durchmarsch: ['Durchmarsch! Alle Stiche, keine Gnade.', 'Hundertzwanzig. Ich bin eine Naturgewalt.'],
+    nullDurchmarsch: ['Plan B hat funktioniert.', 'Wenn schon, denn schon.', 'Null Stiche war mir zu wenig.'],
+    freiPlus: ['Punkte sind Punkte.', 'Frag nicht.'],
+    freiMinus: ['Das musste wohl sein.', 'Ich will nicht drüber reden.'],
+    toRide: ['Ein Pferd! Wo kommt das her?', 'Hü!', 'Ab jetzt nur noch zu Pferd.'],
+    toGlow: ['Ich leuchte. Ist das normal?', 'Ich bin erleuchtet.'],
+    toZombie: ['Punkte... Punkte...', 'Ich bin nicht tot. Ich bin nur im Minus.', 'Mir geht’s gut. Ich krieche nur gern.'],
+    fromZombie: ['Ich lebe! Ich lebe!', 'Zurück von den Toten.'],
+    lostHorse: ['Mein Pferd! Wo ist mein Pferd?'],
+    fire: ['Ich bin nicht zu stoppen!', 'Heiß, heiß, heiß!'],
+    cloud: ['Warum immer ich?', 'Ich hab doch nichts gemacht.']
+  },
+  react: {
+    afterLoss: ['Haha.', 'Das tat weh. Mir nicht.', 'Weiter so, {name}!', 'Ich hab nichts gesagt.', 'Herrlich.', 'Mein Beileid. Nicht.'],
+    afterWin: ['Glück.', 'Pures Glück.', 'Das waren die Karten, nicht du.', 'Angeber.', 'Ich hätte Kontra sagen sollen.']
+  },
+
+  evaluate: {
+    ask: 'Wirklich auswerten? Feiglinge hören auf, wenn sie vorne liegen.',
+    unequal: '{names} {verb} seltener gegeben als die anderen. Unfair, aber euer Problem. Bis zur vollen Runde fehlen noch {k}.',
+    empty: 'Auswerten? Es wurde noch kein einziges Spiel gespielt. Selbst für eure Verhältnisse ist das wenig.',
+    podium: ['Der Sieger: {first}. Ich hätte es besser gemacht, aber gut.', '{first} gewinnt. Applaus. Nicht zu laut, ich hab Kopfweh.'],
+    pranger: '{last} darf an den Pranger. Ist Tradition. Tomaten liegen bereit.',
+    fool: '{last} bekommt die Narrenkappe. Steht dir.'
+  },
+
+  titles: {
+    grand: { title: 'Ritter vom Grand', line: '{n}× Grand gewonnen. Vier Buben, kein Zweifel.' },
+    best: { title: 'Glückspilz des Abends', line: 'Größtes Spiel: {desc}, +{pts}.' },
+    bestManual: { title: 'Gl\u00fcckspilz des Abends', line: 'Gr\u00f6\u00dftes Spiel des Abends: +{pts}.' },
+    mauer: { title: 'Der Mauerer', line: 'Nur {spiele} gemacht. Sicher ist sicher.' },
+    pech: { title: 'Pechvogel', line: '{spiele} verloren. Respekt für die Ausdauer.' },
+    hoch: { title: 'Der Hochstapler', line: '{n}× überreizt. Gier frisst Hirn.' },
+    nullnr: { title: 'Nullnummer', line: '{n}× Null verloren. Ausgerechnet die Sieben.' },
+    ramsch: { title: 'Ramschkönig', line: '{n}× beim Ramsch alles kassiert.' },
+    zombie: { title: 'Zombie des Abends', line: 'Tiefpunkt bei {min}. Gekrochen, nicht gestorben.' },
+    phoenix: { title: 'Phönix aus dem Sumpf', line: 'Von {min} auf {final}. Wer hat das erlaubt?' },
+    durch: { title: 'Der Tyrann', line: '{n}× Durchmarsch. Keine Gnade.' }
+  }
+};
+
+/* ===== Kern: Zustand, Helfer, Ton, Kiebitz ===== */
+const LS_KEY = 'naunin-skatrennen-v1';
+const APP_VERSION = '1.0';
+const DEFAULT_SETTINGS = { pferd: 300, glanz: 600, sound: true, kiebitz: true, manual: true, rev: 2 };
+const $ = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+const fmtScore = n => (n < 0 ? '−' : '') + Math.abs(n);
+const spiele = n => n + (n === 1 ? ' Spiel' : ' Spiele');
+const uid = () => 'p' + Math.random().toString(36).slice(2, 8);
+
+function newState() {
+  return {
+    v: 1, phase: 'onboarding', step: 0, introLine: 0,
+    draft: { names: ['', '', ''] },
+    players: [], startDealer: 0, games: [],
+    settings: Object.assign({}, DEFAULT_SETTINGS),
+    created: Date.now(), finishedAt: null
+  };
+}
+let S = loadState() || newState();
+const savedRev = (S.settings && S.settings.rev) || 1;
+S.settings = Object.assign({}, DEFAULT_SETTINGS, S.settings || {});
+if (savedRev < 2) { S.settings.manual = true; S.settings.rev = 2; }
+function saveState() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { /* Speichern nicht möglich */ } }
+function loadState() {
+  try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+
+const playerById = id => S.players.find(p => p.id === id);
+const pname = id => (playerById(id) || {}).name || '?';
+
+/* Zufallsauswahl ohne schnelle Wiederholung */
+const bags = new Map();
+function pick(key, arr) {
+  if (!arr || !arr.length) return '';
+  let bag = bags.get(key);
+  if (!bag || !bag.length) {
+    bag = arr.map((_, i) => i);
+    for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+    bags.set(key, bag);
+  }
+  return arr[bag.pop()];
+}
+function fill(tpl, vars) {
+  return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (vars && vars[k] !== undefined ? vars[k] : ''));
+}
+function listNames(names) {
+  if (names.length <= 1) return names.join('');
+  return names.slice(0, -1).join(', ') + ' und ' + names[names.length - 1];
+}
+
+/* Spielverlauf-Hilfen */
+function curSeat() { return seatInfo(S.players.length, S.startDealer, S.games.length); }
+function stats() { return computeStats(S.players, S.games); }
+function isLate(d) { const h = (d || new Date()).getHours(); return h >= 23 || h < 5; }
+
+/* ===== Pixel-Icons ===== */
+function pixelIcon(rows, color) {
+  const h = rows.length, w = rows[0].length;
+  let r = '';
+  rows.forEach((row, y) => { for (let x = 0; x < w; x++) if (row[x] !== '.') r += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; });
+  return '<svg viewBox="0 0 ' + w + ' ' + h + '" fill="' + color + '" aria-hidden="true">' + r + '</svg>';
+}
+const ICONS = {
+  list: ['..........', '.XXXXXXXX.', '.X......X.', '.X.XX.XXX.', '.X......X.', '.X.XX.XXX.', '.X......X.', '.X.XX.XXX.', '.X......X.', '.XXXXXXXX.'],
+  sound: ['....X.....', '...XX..X..', '..XXX...X.', 'XXXXX.X..X', 'XXXXX..X.X', 'XXXXX..X.X', 'XXXXX.X..X', '..XXX...X.', '...XX..X..', '....X.....'],
+  mute: ['....X.....', '...XX.....', '..XXX.....', 'XXXXX.X..X', 'XXXXX..XX.', 'XXXXX..XX.', 'XXXXX.X..X', '..XXX.....', '...XX.....', '....X.....'],
+  beak: ['..XXXX....', '.XXXXXX...', 'XX.XXXXX..', 'XXXXXXXXXX', 'XXXXXXXXX.', 'XXXXXXX...', '.XXXXXXXXX', '..XXXXXX..', '...XX.....', '...XX.....'],
+  beakTape: ['..XXXX....', '.XXXXXX...', 'XX.XXXXX..', 'XXXXXXXXXX', 'XXXXX.....', 'XXXX.X.X.X', '.XXXXXXXXX', '..XXXXXX..', '...XX.....', '...XX.....'],
+  gear: ['....XX....', '.X.XXXX.X.', '.XXXXXXXX.', '..XX..XX..', 'XXX....XXX', 'XXX....XXX', '..XX..XX..', '.XXXXXXXX.', '.X.XXXX.X.', '....XX....']
+};
+
+/* ===== Ton: 8-Bit über WebAudio ===== */
+const Sound = {
+  ctx: null,
+  ensure() {
+    if (!S.settings.sound) return null;
+    try {
+      if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { this.ctx = null; }
+    return this.ctx;
+  },
+  tone(freq, start, dur, type, vol) {
+    const ctx = this.ctx; if (!ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type || 'square'; o.frequency.value = freq;
+    const t = ctx.currentTime + start;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol || 0.05, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  },
+  seq(notes, step, type, vol) { notes.forEach((f, i) => { if (f) this.tone(f, i * step, step * 0.95, type, vol); }); },
+  play(name) {
+    if (!this.ensure()) return;
+    const N = { C4: 262, D4: 294, E4: 330, F4: 349, G4: 392, A4: 440, B4: 494, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880, C6: 1047, G3: 196, E3: 165, C3: 131, A3: 220 };
+    switch (name) {
+      case 'tap': this.tone(880, 0, 0.04, 'square', 0.025); break;
+      case 'up': this.seq([N.C5, N.E5, N.G5], 0.07, 'square', 0.04); break;
+      case 'bigup': this.seq([N.C5, N.E5, N.G5, N.C6, 0, N.G5, N.C6], 0.08, 'square', 0.045); break;
+      case 'down': this.seq([N.G4, N.E4, N.C4], 0.1, 'triangle', 0.08); break;
+      case 'bigdown': this.seq([N.G4, N.F4, N.E4, N.D4, N.C4, 0, N.C3], 0.14, 'sawtooth', 0.035); break;
+      case 'blip': this.tone(660, 0, 0.06, 'square', 0.03); break;
+      case 'horse': this.seq([N.G5, 0, N.G5, N.E5, 0, N.G5, 0, N.G5, N.E5], 0.06, 'square', 0.03); break;
+      case 'zombie': this.seq([N.E3, N.C3, N.A3 / 2], 0.18, 'sawtooth', 0.04); break;
+      case 'shine': this.seq([N.C6, N.G5, N.C6, N.E5 * 2], 0.05, 'triangle', 0.05); break;
+      case 'fanfare': this.seq([N.G4, N.C5, N.E5, N.G5, 0, N.E5, N.G5, N.G5, N.G5, 0, N.C6], 0.12, 'square', 0.05);
+        this.seq([N.C4, 0, N.G3, 0, N.C4, 0, N.G3, 0, N.C4, 0, N.E4], 0.12, 'triangle', 0.06); break;
+      case 'splat': this.tone(120, 0, 0.12, 'sawtooth', 0.04); break;
+    }
+  }
+};
+
+/* ===== Bildschirm wach halten ===== */
+let wakeLock = null;
+async function keepAwake() {
+  try {
+    if ('wakeLock' in navigator && document.visibilityState === 'visible' && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) { wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+document.addEventListener('pointerdown', () => { keepAwake(); Sound.ensure(); }, { once: true });
+
+/* ===== Kiebitz: Prinz Naunin spricht ===== */
+class Kiebitz {
+  constructor(root) {
+    this.root = root;
+    this.cv = $('canvas', root);
+    this.ctx = this.cv.getContext('2d');
+    this.sayEl = $('.say', root);
+    this.srEl = $('.sr', root);
+    this.statusEl = $('.status', root);
+    this.mood = 'idle';
+    this.queue = [];
+    this.busy = false;
+    this.typing = null;
+    this.draw();
+    this.idleLoop();
+  }
+  muted() { return !S.settings.kiebitz; }
+  draw() {
+    let m = this.mood;
+    if (this.muted()) m = 'tape';
+    this.ctx.clearRect(0, 0, this.cv.width, this.cv.height);
+    this.ctx.drawImage(spriteNaunin(m), 0, 0);
+  }
+  idleLoop() {
+    const tick = () => {
+      if (!this.typing && document.visibilityState === 'visible' && this.root.offsetParent) {
+        const r = Math.random();
+        if (isLate() && r < 0.12) { this.mood = 'yawn'; this.draw(); setTimeout(() => { this.mood = 'idle'; this.draw(); }, 1300); }
+        else { this.mood = 'blink'; this.draw(); setTimeout(() => { if (!this.typing) { this.mood = 'idle'; this.draw(); } }, 140); }
+      }
+      setTimeout(tick, 2600 + Math.random() * 3200);
+    };
+    setTimeout(tick, 2000);
+  }
+  setStatus(html) { if (this.statusEl) { this.statusEl.innerHTML = html; this.statusEl.hidden = !html; } }
+  /* force: auch bei Maulkorb sprechen (Onboarding) */
+  say(text, opts) {
+    opts = opts || {};
+    if (!opts.queue) { this.queue = []; this.stopTyping(); }
+    if (this.muted() && !opts.force) {
+      if (!opts.queue) this.type('Mmmpf.', true);
+      return;
+    }
+    this.queue.push(text);
+    if (!this.busy) this.next();
+  }
+  next() {
+    const t = this.queue.shift();
+    if (t === undefined) { this.busy = false; return; }
+    this.busy = true;
+    this.type(t, false, () => setTimeout(() => this.next(), 1600));
+  }
+  stopTyping() {
+    if (this.typing) { clearInterval(this.typing); this.typing = null; }
+    this.busy = false;
+  }
+  type(text, silent, done) {
+    this.stopTyping();
+    this.busy = !silent;
+    if (this.srEl) this.srEl.textContent = text;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.sayEl.textContent = text; this.mood = 'idle'; this.draw(); if (done) done(); return; }
+    let i = 0; let tick = 0;
+    this.sayEl.innerHTML = '<span class="cursor"></span>';
+    this.typing = setInterval(() => {
+      i += 1; tick++;
+      this.sayEl.innerHTML = esc(text.slice(0, i)) + (i < text.length ? '<span class="cursor"></span>' : '');
+      if (!silent) { this.mood = (tick % 4 < 2 && text[i - 1] !== ' ') ? 'talk' : 'idle'; this.draw(); }
+      if (i >= text.length) {
+        clearInterval(this.typing); this.typing = null;
+        this.mood = 'idle'; this.draw();
+        if (done) done();
+      }
+    }, 24);
+  }
+  refresh() { this.draw(); }
+}
+
+/* ===== Sprite als skaliertes Canvas-Element ===== */
+function spriteEl(src, scale, cls) {
+  const c = document.createElement('canvas');
+  c.width = src.width; c.height = src.height;
+  c.className = 'px' + (cls ? ' ' + cls : '');
+  c.style.width = src.width * scale + 'px';
+  c.style.height = src.height * scale + 'px';
+  c.getContext('2d').drawImage(src, 0, 0);
+  return c;
+}
+function figureSprite(chId, tier) {
+  if (tier === 'zombie') return spriteCrawl(chId, 0);
+  if (tier === 'ride' || tier === 'glow') return spriteRide(chId, 0);
+  return spriteWalk(chId, 0);
+}
+
+/* ===== Overlay: Sheets und Dialoge ===== */
+const Layer = {
+  el: null,
+  open(html, opts) {
+    this.close();
+    const wrap = document.createElement('div');
+    wrap.innerHTML = '<div class="backdrop' + (opts && opts.modal ? ' modal-bd' : '') + '"></div>' + html;
+    this.el = wrap;
+    $('#layer').appendChild(wrap);
+    $('.backdrop', wrap).addEventListener('click', () => { if (!opts || !opts.sticky) this.close(); });
+    document.body.style.overflow = 'hidden';
+    this.onClose = opts && opts.onClose;
+    return wrap;
+  },
+  close() {
+    if (this.el) { this.el.remove(); this.el = null; document.body.style.overflow = ''; if (this.onClose) { const f = this.onClose; this.onClose = null; f(); } }
+  }
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape') Layer.close(); });
+
+function confirmDialog(text, okLabel, cancelLabel, onOk, opts) {
+  const html = '<div class="modal" role="dialog" aria-modal="true">' +
+    '<div class="mtxt"><div class="pcard" style="--nz:1.2"><span class="idx">B<b>&clubs;</b></span><canvas class="px" width="43" height="38"></canvas></div><p>' + esc(text) + '</p></div>' +
+    '<div class="row"><button class="btn dark" data-a="no" type="button">' + esc(cancelLabel) + '</button>' +
+    '<button class="btn' + (opts && opts.danger ? ' red' : '') + '" data-a="ok" type="button">' + esc(okLabel) + '</button></div></div>';
+  const w = Layer.open(html, { modal: true });
+  const cv = $('canvas', w); cv.getContext('2d').drawImage(spriteNaunin(S.settings.kiebitz ? 'idle' : 'tape'), 0, 0);
+  $('[data-a=no]', w).addEventListener('click', () => { Sound.play('tap'); Layer.close(); });
+  $('[data-a=ok]', w).addEventListener('click', () => { Sound.play('tap'); Layer.close(); onOk(); });
+  $('[data-a=ok]', w).focus();
+}
+
+/* ===== Onboarding mit Prinz Naunin ===== */
+const Onb = {
+  k: null,
+  init() {
+    this.k = new Kiebitz($('#scr-onb [data-kiebitz]'));
+    $('#onb-next').addEventListener('click', () => { Sound.play('tap'); this.next(); });
+    $('#onb-back').addEventListener('click', () => { Sound.play('tap'); this.back(); });
+  },
+  show() {
+    showScreen('onb');
+    this.render(true);
+  },
+  say(t) { this.k.say(t, { force: true }); },
+  render(speak) {
+    const body = $('#onb-body');
+    const step = S.step;
+    $('#onb-back').hidden = step === 0 && S.introLine === 0;
+    $('#onb-next').textContent = step === 4 ? 'Los geht’s' : 'Weiter';
+    if (step === 0) {
+      if (speak) this.say(TXT.intro[S.introLine] || TXT.intro[0]);
+      body.innerHTML = '<div class="panel"><h2>Das Blatt</h2><div class="chips" id="onb-deck" style="gap:10px;align-items:flex-end"></div>' +
+        '<p class="hint">Elf Figuren aus dem französischen Blatt, jede mit eigenem Gesicht. Der Kreuz-Bube ist schon vergeben. An mich.</p></div>';
+      const deck = $('#onb-deck');
+      CHARS.forEach(c => deck.appendChild(spriteEl(spriteWalk(c.id, 0), 2)));
+    }
+    if (step === 1) {
+      if (speak) this.say(TXT.names);
+      const names = S.draft.names;
+      body.innerHTML = '<div class="panel"><h2>Wer spielt mit?</h2><div class="name-list">' +
+        names.map((n, i) => '<div class="name-row"><span class="nr">' + (i + 1) + '</span>' +
+          '<input id="name-' + i + '" type="text" maxlength="14" autocomplete="off" autocapitalize="words" placeholder="Name" value="' + esc(n) + '" aria-label="Name Spieler ' + (i + 1) + '">' +
+          (names.length > 3 ? '<button class="xbtn" type="button" data-rm="' + i + '" aria-label="Spieler entfernen">×</button>' : '') + '</div>').join('') +
+        '</div>' + (names.length < 6 ? '<button class="addbtn" type="button" id="add-name">+ Noch jemand</button>' : '') +
+        '<p class="hint">Drei bis sechs Leute. Bei vier und mehr setzt reihum der Geber aus, ab fünf auch noch jemand.</p></div>';
+      $$('#onb-body input').forEach((inp, i) => {
+        inp.addEventListener('input', () => { S.draft.names[i] = inp.value; saveState(); });
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); const nx = $('#name-' + (i + 1)); if (nx) nx.focus(); else this.next(); }
+        });
+      });
+      $$('#onb-body [data-rm]').forEach(b => b.addEventListener('click', () => {
+        S.draft.names.splice(+b.dataset.rm, 1); saveState(); this.render(false);
+      }));
+      const add = $('#add-name');
+      if (add) add.addEventListener('click', () => { S.draft.names.push(''); saveState(); this.render(false); $('#name-' + (S.draft.names.length - 1)).focus(); });
+    }
+    if (step === 2 || step === 3) {
+      if (speak) this.say(step === 2 ? TXT.seats : TXT.dealer);
+      this.renderTable(body, step);
+    }
+    if (step === 4) {
+      if (speak) this.say(TXT.figures);
+      this.renderFigures(body);
+    }
+  },
+  renderTable(body, step) {
+    const n = S.players.length;
+    const arrow = pixelIcon(['....XXXX....', '..XX....X...', '.X.......X..', '.X.......XXX', 'X.........X.', 'X...........', 'X...........', 'X...........', '.X........X.', '.X........X.', '..XX....XX..', '....XXXX....'], '#2a1d14');
+    body.innerHTML = '<div class="panel"><h2>' + (step === 2 ? 'Sitzordnung' : 'Wer gibt zuerst?') + '</h2>' +
+      '<div class="table-wrap" id="tbl"><div class="table-top">' + arrow + '</div></div>' +
+      '<p class="hint" id="tbl-hint"></p></div>';
+    const tbl = $('#tbl');
+    const d = S.startDealer;
+    S.players.forEach((p, i) => {
+      const a = (-90 + i * 360 / n) * Math.PI / 180;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'seat';
+      b.style.left = (50 + 40 * Math.cos(a)) + '%';
+      b.style.top = (50 + 40 * Math.sin(a)) + '%';
+      let extra = '';
+      if (step === 3) {
+        const rel = ((i - d) % n + n) % n;
+        if (rel === 0) extra = '<span class="badge">GIBT</span>';
+        else if (rel <= 3) extra = '<span class="pos">' + ['', 'Vorhand', 'Mittelhand', 'Hinterhand'][rel] + '</span>';
+        else extra = '<span class="pos">setzt aus</span>';
+        if (n === 3 && rel === 0) extra = '<span class="badge">GIBT</span><span class="pos">Hinterhand</span>';
+      }
+      b.innerHTML = '<span class="sname">' + esc(p.name) + '</span>' + extra;
+      if (this.sel === i) b.classList.add('sel');
+      b.addEventListener('click', () => {
+        Sound.play('tap');
+        if (step === 2) {
+          if (this.sel === undefined || this.sel === null) { this.sel = i; }
+          else if (this.sel === i) { this.sel = null; }
+          else { const t = S.players[this.sel]; S.players[this.sel] = S.players[i]; S.players[i] = t; this.sel = null; saveState(); }
+          this.renderTable(body, step);
+        } else {
+          S.startDealer = i; saveState();
+          this.renderTable(body, step);
+          const vh = S.players[(i + 1) % n].name;
+          this.say(fill(TXT.dealerPicked, { dealer: S.players[i].name, vh }));
+        }
+      });
+      tbl.appendChild(b);
+    });
+    $('#tbl-hint').textContent = step === 2
+      ? (this.sel !== null && this.sel !== undefined ? S.players[this.sel].name + ' ausgewählt. Jetzt den Platz antippen, mit dem getauscht wird.' : 'Gegeben wird im Uhrzeigersinn, wie der Pfeil zeigt.')
+      : 'Antippen, wer zuerst gibt. Unter den Namen steht, wer im ersten Spiel Vorhand, Mittelhand und Hinterhand ist.';
+  },
+  assignChars() {
+    const taken = new Set(S.players.map(p => p.char).filter(Boolean));
+    const free = CHARS.map(c => c.id).filter(id => !taken.has(id));
+    for (let i = free.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [free[i], free[j]] = [free[j], free[i]]; }
+    S.players.forEach(p => {
+      if (!p.char) p.char = free.pop();
+      if (!p.reason) p.reason = this.reasonFor(p.char);
+    });
+    saveState();
+  },
+  reasonFor(chId) {
+    const c = CHAR_BY_ID[chId];
+    return TXT.suitReason[c.suit] + ' ' + pick('role-' + c.role, TXT.roleReason[c.role]);
+  },
+  renderFigures(body) {
+    body.innerHTML = '<div class="panel"><h2>Eure Figuren</h2><div class="fig-list" id="figlist"></div></div>';
+    const list = $('#figlist');
+    S.players.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'fig-row';
+      row.innerHTML = '<div class="fsp" style="width:auto;height:auto;padding:4px 4px 2px"></div>' +
+        '<div class="ftxt"><div class="fname">' + esc(p.name) + '</div><div class="fchar">' + esc(charName(p.char)) + '</div><div class="freason">' + esc(p.reason || '') + '</div></div>' +
+        '<button class="btn small dark" type="button">' + (this.pickFor === p.id ? 'Fertig' : 'Tauschen') + '</button>';
+      $('.fsp', row).appendChild(spriteEl(spriteWalk(p.char, 0), 3));
+      $('button', row).addEventListener('click', () => { Sound.play('tap'); this.pickFor = this.pickFor === p.id ? null : p.id; this.renderFigures(body); });
+      if (this.pickFor === p.id) {
+        const pk = document.createElement('div');
+        pk.className = 'picker';
+        CHARS.forEach(c => {
+          const owner = S.players.find(q => q.char === c.id);
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'pick' + (owner && owner.id === p.id ? ' cur' : '');
+          b.appendChild(spriteEl(spriteWalk(c.id, 0), 2));
+          const t = document.createElement('span'); t.textContent = charName(c.id); b.appendChild(t);
+          if (owner && owner.id !== p.id) { const o = document.createElement('span'); o.className = 'taken'; o.textContent = owner.name; b.appendChild(o); }
+          b.addEventListener('click', () => {
+            Sound.play('tap');
+            if (owner && owner.id !== p.id) { owner.char = p.char; owner.reason = this.reasonFor(owner.char); }
+            p.char = c.id; p.reason = this.reasonFor(c.id);
+            this.pickFor = null; saveState(); this.renderFigures(body);
+          });
+          pk.appendChild(b);
+        });
+        row.appendChild(pk);
+      }
+      list.appendChild(row);
+    });
+  },
+  next() {
+    if (S.step === 0) {
+      if (S.introLine < TXT.intro.length - 1) { S.introLine++; saveState(); this.render(true); return; }
+      S.step = 1; saveState(); this.render(true); return;
+    }
+    if (S.step === 1) {
+      const names = S.draft.names.map(n => n.trim()).filter(Boolean);
+      if (names.length < 3) { this.say(TXT.namesWarn.few); return; }
+      const low = names.map(n => n.toLowerCase());
+      if (new Set(low).size !== low.length) { this.say(TXT.namesWarn.dup); return; }
+      S.draft.names = names.slice();
+      const old = S.players;
+      S.players = names.map(n => old.find(p => p.name.toLowerCase() === n.toLowerCase()) || { id: uid(), name: n, char: null });
+      S.players.forEach((p, i) => { p.name = names[i]; });
+      if (S.startDealer >= S.players.length) S.startDealer = 0;
+      this.sel = null;
+      S.step = 2; saveState(); this.render(true); return;
+    }
+    if (S.step === 2) { this.sel = null; S.step = 3; saveState(); this.render(true); return; }
+    if (S.step === 3) { this.assignChars(); S.step = 4; saveState(); this.render(true); return; }
+    if (S.step === 4) { startGame(); }
+  },
+  back() {
+    if (S.step === 0) { if (S.introLine > 0) { S.introLine--; saveState(); this.render(true); } return; }
+    this.sel = null; this.pickFor = null;
+    S.step--; saveState(); this.render(true);
+  }
+};
+
+function startGame() {
+  S.phase = 'race'; S.games = []; S.finishedAt = null; S.lateSaid = false;
+  saveState();
+  Race.show(true);
+  Race.k.say(TXT.start);
+}
+
+/* ===== Rennbahn ===== */
+const FONT3 = {
+  '0': ['111', '101', '101', '101', '111'], '1': ['010', '110', '010', '010', '111'],
+  '2': ['111', '001', '111', '100', '111'], '3': ['111', '001', '111', '001', '111'],
+  '4': ['101', '101', '111', '001', '001'], '5': ['111', '100', '111', '001', '111'],
+  '6': ['111', '100', '111', '101', '111'], '7': ['111', '001', '010', '010', '010'],
+  '8': ['111', '101', '111', '101', '111'], '9': ['111', '101', '111', '001', '111'],
+  '-': ['000', '000', '111', '000', '000'], '+': ['000', '010', '111', '010', '000']
+};
+function drawNum(b, str, x, y, color, shadow) {
+  str = String(str);
+  const w = str.length * 4 - 1;
+  let cx = Math.round(x - w / 2);
+  for (const ch of str) {
+    const gl = FONT3[ch];
+    if (gl) for (let yy = 0; yy < 5; yy++) for (let xx = 0; xx < 3; xx++) if (gl[yy][xx] === '1') {
+      if (shadow) { b.fillStyle = shadow; b.fillRect(cx + xx + 1, y + yy + 1, 1, 1); }
+      b.fillStyle = color; b.fillRect(cx + xx, y + yy, 1, 1);
+    }
+    cx += 4;
+  }
+  return w;
+}
+function hash2(a, b) { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >> 13)) * 1274126177 | 0; return ((h ^ (h >> 16)) >>> 0) / 4294967295; }
+
+function skyPalette(d) {
+  const h = d.getHours() + d.getMinutes() / 60;
+  if (h >= 7.5 && h < 17.5) return { bands: ['#4f8fe0', '#68a6ec', '#86bcf2', '#a8d2f6'], sun: true, hill: '#3f7a4a', hill2: '#56935a', castle: '#7d7a96', castle2: '#5f5c7a', win: '#2b2840', label: '#1b1427', lshadow: '#e8f4ff' };
+  if (h >= 17.5 && h < 20.5) return { bands: ['#2c2c6a', '#6a3f7e', '#c0607a', '#f0a070'], sun: false, dusk: true, hill: '#2e3f4a', hill2: '#3f5560', castle: '#3b3150', castle2: '#2a2240', win: '#f5c542', label: '#fff1d0', lshadow: '#1b1427' };
+  if (h >= 5 && h < 7.5) return { bands: ['#232456', '#4a3f78', '#a07090', '#f0b890'], sun: false, dusk: true, hill: '#2a3a46', hill2: '#3a4e5a', castle: '#3b3150', castle2: '#2a2240', win: '#f5c542', label: '#fff1d0', lshadow: '#1b1427' };
+  return { bands: ['#0c0a22', '#14123a', '#1d1b4a', '#28265c'], stars: true, moon: isLate(d), hill: '#141a2e', hill2: '#1c243a', castle: '#211c3c', castle2: '#17132c', win: '#f5c542', label: '#e9e2ff', lshadow: '#0c0a22' };
+}
+
+const TIER_LABEL = { walk: 'zu Fuß', ride: 'zu Pferd', glow: 'zu Pferd und leuchtet', zombie: 'kriecht im Sumpf' };
+
+const Race = {
+  k: null, SKY: 30, LANE: 32, ML: 14, MR: 20,
+  figs: new Map(), view: { lo: -80, hi: 400 }, viewT: { lo: -80, hi: 400 },
+  running: false, lastDraw: 0, W: 0, H: 0, scale: 1, kc: 1,
+
+  init() {
+    this.k = new Kiebitz($('#scr-race [data-kiebitz]'));
+    this.wrap = $('#race-wrap'); this.cv = $('#race-cv'); this.ctx = this.cv.getContext('2d');
+    this.ov = $('#race-ov');
+    this.buf = document.createElement('canvas'); this.bctx = this.buf.getContext('2d');
+    $('#btn-list').innerHTML = pixelIcon(ICONS.list, '#efe7d3');
+    $('#btn-settings').innerHTML = pixelIcon(ICONS.gear, '#efe7d3');
+    $('#btn-enter').addEventListener('click', () => { Sound.play('tap'); Entry.open(null); });
+    $('#btn-undo').addEventListener('click', () => { Sound.play('tap'); this.askUndo(); });
+    $('#btn-eval').addEventListener('click', () => { Sound.play('tap'); askEvaluate(); });
+    $('#btn-list').addEventListener('click', () => { Sound.play('tap'); openList(); });
+    $('#btn-settings').addEventListener('click', () => { Sound.play('tap'); openSettings(); });
+    $('#btn-sound').addEventListener('click', () => { S.settings.sound = !S.settings.sound; saveState(); this.updateToggles(); Sound.play('blip'); });
+    $('#btn-mute').addEventListener('click', () => {
+      S.settings.kiebitz = !S.settings.kiebitz; saveState(); this.updateToggles();
+      this.k.refresh();
+      if (S.settings.kiebitz) this.k.say(TXT.naunin.muteOff); else this.k.say(TXT.naunin.muteOn, { force: true });
+      if (!S.settings.kiebitz) $$('.bubble', this.ov).forEach(b => b.remove());
+    });
+    let rt = null;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (S.phase === 'race') this.layout(); }, 120); });
+    this.updateToggles();
+  },
+  updateToggles() {
+    const s = $('#btn-sound'), m = $('#btn-mute');
+    s.innerHTML = pixelIcon(S.settings.sound ? ICONS.sound : ICONS.mute, '#efe7d3');
+    s.setAttribute('aria-pressed', String(S.settings.sound));
+    m.innerHTML = pixelIcon(S.settings.kiebitz ? ICONS.beak : ICONS.beakTape, '#efe7d3');
+    m.setAttribute('aria-pressed', String(S.settings.kiebitz));
+    m.title = S.settings.kiebitz ? 'Kiebitz, halt’s Maul' : 'Kiebitz darf wieder reden';
+    m.setAttribute('aria-label', m.title);
+    s.title = S.settings.sound ? 'Ton aus' : 'Ton an';
+  },
+
+  show(fresh) {
+    showScreen('race');
+    this.build();
+    this.layout();
+    this.updateUI();
+    this.start();
+    if (!fresh) this.k.say(pick('wb', TXT.welcomeBack));
+  },
+  build() {
+    this.figs.clear();
+    this.ov.innerHTML = '';
+    const st = stats();
+    S.players.forEach((p, i) => {
+      const label = document.createElement('div');
+      label.className = 'flabel';
+      this.ov.appendChild(label);
+      const sc = st[p.id].score;
+      this.figs.set(p.id, { id: p.id, lane: i, disp: sc, from: sc, to: sc, t0: 0, dur: 0, label, phase: Math.random() * 3000, tier: tierOf(sc, S.settings), lastX: 0 });
+    });
+    this.snapView();
+  },
+  layout() {
+    const cssW = this.wrap.clientWidth;
+    if (!cssW) return;
+    const dpr = window.devicePixelRatio || 1;
+    const kCss = clamp(cssW / 195, 1.8, 3.2);
+    this.scale = Math.max(1, Math.round(kCss * dpr));
+    this.W = Math.ceil(cssW * dpr / this.scale);
+    this.H = this.SKY + S.players.length * this.LANE + 9;
+    this.buf.width = this.W; this.buf.height = this.H;
+    this.cv.width = this.W * this.scale; this.cv.height = this.H * this.scale;
+    this.kc = this.scale / dpr;
+    const cw = this.W * this.kc, ch = this.H * this.kc;
+    this.cv.style.width = cw + 'px'; this.cv.style.height = ch + 'px';
+    this.ov.style.width = cw + 'px'; this.ov.style.height = ch + 'px';
+    this.wrap.style.height = ch + 'px';
+    this.draw(performance.now());
+  },
+  targetView() {
+    let mn = 0, mx = 0;
+    for (const f of this.figs.values()) { mn = Math.min(mn, f.to, f.disp); mx = Math.max(mx, f.to, f.disp); }
+    const span = Math.max(mx - mn, 200);
+    return { lo: mn - span * 0.12 - 22, hi: mx + span * 0.2 + 20 };
+  },
+  snapView() { const t = this.targetView(); this.view = { lo: t.lo, hi: t.hi }; this.viewT = t; },
+  X(v) { return this.ML + (v - this.view.lo) / (this.view.hi - this.view.lo) * (this.W - this.ML - this.MR); },
+  start() {
+    if (this.running) return;
+    this.running = true;
+    const loop = now => {
+      if (!this.running) return;
+      requestAnimationFrame(loop);
+      const moving = this.anyMoving(now) || Math.abs(this.view.lo - this.viewT.lo) + Math.abs(this.view.hi - this.viewT.hi) > 0.5;
+      if (!moving && now - this.lastDraw < 100) return;
+      this.lastDraw = now;
+      this.draw(now);
+    };
+    requestAnimationFrame(loop);
+  },
+  stop() { this.running = false; },
+  anyMoving(now) { for (const f of this.figs.values()) if (f.dur && now - f.t0 < f.dur) return true; return false; },
+
+  /* Punkte neu übernehmen und Figuren laufen lassen */
+  sync() {
+    const st = stats();
+    const now = performance.now();
+    let maxDur = 0;
+    for (const f of this.figs.values()) {
+      const target = st[f.id].score;
+      if (target !== f.to || f.disp !== target) {
+        f.from = f.disp; f.to = target; f.t0 = now;
+        f.dur = clamp(800 + Math.abs(target - f.from) * 3, 900, 2400);
+        maxDur = Math.max(maxDur, f.dur);
+      }
+    }
+    this.viewT = this.targetView();
+    this.updateUI();
+    return maxDur;
+  },
+  updateUI() {
+    const st = stats();
+    const n = S.players.length;
+    const si = curSeat();
+    const dealer = S.players[si.dealer], vh = S.players[si.active[0]];
+    let status = 'Spiel <b>' + (S.games.length + 1) + '</b> \u00b7 Geber <b>' + esc(dealer.name) + '</b> · Vorhand <b>' + esc(vh.name) + '</b>';
+    if (n > 3) status += ' · Pause <b>' + esc(listNames(si.out.map(i => S.players[i].name))) + '</b>';
+    this.k.setStatus(status);
+    /* Labels */
+    S.players.forEach((p, i) => {
+      const f = this.figs.get(p.id); if (!f) return;
+      const out = si.out.includes(i);
+      f.out = out; f.dealer = i === si.dealer;
+      const sc = st[p.id].score;
+      f.label.className = 'flabel' + (out ? ' out' : '');
+      f.label.innerHTML = (f.dealer ? '<span class="deal" title="gibt"></span>' : '') + esc(p.name) + ' <span class="sc' + (sc < 0 ? ' neg' : '') + '">' + fmtScore(sc) + '</span>';
+      f.streak = st[p.id].streak;
+      f._lx = -1;
+    });
+    /* Rangliste */
+    const order = S.players.slice().sort((a, b) => st[b.id].score - st[a.id].score);
+    const box = $('#standings');
+    box.innerHTML = '';
+    let rank = 0, prev = null;
+    order.forEach((p, idx) => {
+      const s = st[p.id];
+      if (prev === null || s.score !== prev) rank = idx + 1;
+      prev = s.score;
+      const tier = tierOf(s.score, S.settings);
+      const row = document.createElement('div');
+      row.className = 'st-row';
+      const tags = (s.streak >= 3 ? '<span class="tag fire">' + s.streak + ' IN FOLGE</span>' : '') + (s.streak <= -3 ? '<span class="tag rain">PECH</span>' : '');
+      row.innerHTML = '<span class="rk">' + rank + '</span><span class="sp"></span>' +
+        '<span class="nm"><b>' + esc(p.name) + tags + '</b><small>' + esc(charName(p.char)) + ', ' + TIER_LABEL[tier] + '</small></span>' +
+        '<span class="pts"><span class="' + (s.score < 0 ? 'neg' : '') + '">' + fmtScore(s.score) + '</span>' +
+        (S.games.length ? '<small>' + spiele(s.played) + '</small>' : '') + '</span>';
+      $('.sp', row).appendChild(spriteEl(spriteWalk(p.char, 0, s.score < 0), 2));
+      box.appendChild(row);
+    });
+    $('#btn-undo').disabled = !S.games.length;
+    $('#btn-enter').textContent = S.settings.manual ? 'Punkte eintragen' : 'Spiel eintragen';
+  },
+
+  /* ---------- Zeichnen ---------- */
+  draw(now) {
+    const b = this.bctx, W = this.W, H = this.H, SKY = this.SKY, LANE = this.LANE;
+    if (!W) return;
+    this.view.lo += (this.viewT.lo - this.view.lo) * 0.1;
+    this.view.hi += (this.viewT.hi - this.view.hi) * 0.1;
+    const date = new Date();
+    const pal = skyPalette(date);
+    /* Himmel */
+    const bandH = Math.ceil(SKY / 4);
+    pal.bands.forEach((c, i) => { b.fillStyle = c; b.fillRect(0, i * bandH, W, bandH); });
+    if (pal.stars) {
+      for (let i = 0; i < 34; i++) {
+        const sx = Math.floor(hash2(i, 3) * W), sy = Math.floor(hash2(i, 7) * (SKY - 12));
+        if ((i + Math.floor(now / 700)) % 9 === 0) continue;
+        b.fillStyle = i % 5 === 0 ? '#f5c542' : '#d8d4f0';
+        b.fillRect(sx, sy, 1, 1);
+      }
+    }
+    if (pal.moon) {
+      const mx = Math.round(W * 0.16), my = 8;
+      b.fillStyle = '#f4ead2';
+      for (let yy = -4; yy <= 4; yy++) for (let xx = -4; xx <= 4; xx++) if (xx * xx + yy * yy <= 17) b.fillRect(mx + xx, my + yy, 1, 1);
+      b.fillStyle = pal.bands[0];
+      for (let yy = -4; yy <= 4; yy++) for (let xx = -4; xx <= 4; xx++) if ((xx - 2) * (xx - 2) + (yy + 1) * (yy + 1) <= 12) b.fillRect(mx + xx, my + yy, 1, 1);
+    }
+    if (pal.sun) {
+      const mx = Math.round(W * 0.16), my = 9;
+      b.fillStyle = '#ffe28a';
+      for (let yy = -4; yy <= 4; yy++) for (let xx = -4; xx <= 4; xx++) if (xx * xx + yy * yy <= 14) b.fillRect(mx + xx, my + yy, 1, 1);
+      const ph = Math.floor(now / 400) % 2;
+      b.fillStyle = '#f5c542';
+      [[0, -7], [0, 6], [-7, 0], [6, 0], [-5, -5], [4, -5], [-5, 4], [4, 4]].forEach(([dx, dy], i) => { if ((i + ph) % 2) b.fillRect(mx + dx, my + dy, 1, 1); });
+    }
+    /* Hügel und Burg */
+    for (let x = 0; x < W; x++) {
+      const hy = Math.round(SKY - 5 - 2 - 2 * Math.sin(x * 0.06) - 1.5 * Math.sin(x * 0.17 + 1));
+      b.fillStyle = pal.hill2; b.fillRect(x, hy, 1, SKY - hy);
+      const hy2 = Math.round(SKY - 3 - 1.5 * Math.sin(x * 0.11 + 2));
+      b.fillStyle = pal.hill; b.fillRect(x, hy2, 1, SKY - hy2);
+    }
+    this.drawCastle(b, W - 30, SKY - 3, pal, now);
+    /* Bahnen */
+    const zx = Math.round(this.X(0));
+    S.players.forEach((p, i) => {
+      const y0 = SKY + i * LANE;
+      const even = i % 2 === 0;
+      b.fillStyle = even ? '#4f8a3a' : '#5a9542'; b.fillRect(zx, y0, W - zx, LANE);
+      b.fillStyle = even ? '#34402a' : '#3a4630'; b.fillRect(0, y0, zx, LANE);
+      b.fillStyle = '#2c5a24'; b.fillRect(zx, y0, W - zx, 1);
+      b.fillStyle = '#232c1c'; b.fillRect(0, y0, zx, 1);
+      const py = y0 + LANE - 8;
+      b.fillStyle = '#9c7646'; b.fillRect(zx, py, W - zx, 5);
+      b.fillStyle = '#b8905a'; b.fillRect(zx, py, W - zx, 1);
+      b.fillStyle = '#4a3c2a'; b.fillRect(0, py, zx, 5);
+      b.fillStyle = '#5a4a32'; b.fillRect(0, py, zx, 1);
+      for (let x = 2; x < W; x += 5) {
+        const r = hash2(x, i + 11);
+        const yy = y0 + 3 + Math.floor(hash2(x, i + 29) * (LANE - 13));
+        if (x >= zx) {
+          if (r < 0.22) { b.fillStyle = '#3c7a2c'; b.fillRect(x, yy, 1, 2); b.fillRect(x + 1, yy + 1, 1, 1); }
+          else if (r < 0.26) { b.fillStyle = ['#f4ead2', '#f5c542', '#e86a8a'][Math.floor(r * 100) % 3]; b.fillRect(x, yy, 1, 1); b.fillStyle = '#3c7a2c'; b.fillRect(x, yy + 1, 1, 1); }
+          else if (r > 0.985) { b.fillStyle = '#2f6a26'; b.fillRect(x - 1, yy + 1, 4, 2); b.fillRect(x, yy, 2, 1); }
+          if (hash2(x, i + 47) < 0.18) { b.fillStyle = '#87643a'; b.fillRect(x, py + 2 + Math.floor(r * 3), 1, 1); }
+        } else {
+          if (r < 0.2) { b.fillStyle = '#5c6a36'; b.fillRect(x, yy, 1, 3); b.fillStyle = '#7a6a3a'; b.fillRect(x, yy - 1, 1, 1); }
+          else if (r < 0.27) {
+            const ph = Math.floor((now + x * 97) / 350) % 6;
+            if (ph < 3) { b.fillStyle = '#6a7a4a'; b.fillRect(x, yy + 4 - ph, 1, 1); }
+          } else if (r > 0.975 && x < zx - 6) {
+            b.fillStyle = '#7a7890'; b.fillRect(x, yy, 3, 5); b.fillRect(x + 1, yy - 1, 1, 1);
+            b.fillStyle = '#4a4860'; b.fillRect(x + 1, yy + 1, 1, 3); b.fillRect(x, yy + 2, 3, 1);
+          }
+        }
+      }
+    });
+    /* Fußleiste */
+    const fy = SKY + S.players.length * this.LANE;
+    b.fillStyle = '#1e1812'; b.fillRect(0, fy, W, H - fy);
+    b.fillStyle = '#2e241a'; b.fillRect(0, fy, W, 1);
+    /* Meilensteine */
+    const span = this.view.hi - this.view.lo;
+    const steps = [25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000];
+    let step = steps.find(s => span / s <= 5) || 10000;
+    for (let v = Math.ceil(this.view.lo / step) * step; v <= this.view.hi; v += step) {
+      if (v === 0) continue;
+      const x = Math.round(this.X(v));
+      if (x < 6 || x > W - 6) continue;
+      for (let i = 0; i < S.players.length; i++) {
+        const y0 = SKY + i * this.LANE;
+        b.fillStyle = v < 0 ? '#2a2418' : '#6a4a2a';
+        b.fillRect(x, y0 + this.LANE - 11, 1, 4);
+        b.fillStyle = v < 0 ? '#3a3424' : '#8a6438';
+        b.fillRect(x - 1, y0 + this.LANE - 11, 3, 1);
+      }
+      drawNum(b, v, x, H - 7, v < 0 ? '#ff8a7a' : '#e6d6a8');
+    }
+    /* Startlinie */
+    for (let y = SKY; y < fy; y += 2) {
+      b.fillStyle = (y / 2) % 2 ? '#f4ead2' : '#1b1427'; b.fillRect(zx, y, 1, 2);
+      b.fillStyle = (y / 2) % 2 ? '#1b1427' : '#f4ead2'; b.fillRect(zx + 1, y, 1, 2);
+    }
+    b.fillStyle = '#1b1427'; b.fillRect(zx, SKY - 14, 1, 14);
+    b.fillStyle = '#f5c542'; b.fillRect(zx + 1, SKY - 14, 9, 7);
+    b.fillStyle = '#b9852a'; b.fillRect(zx + 1, SKY - 8, 9, 1);
+    drawNum(b, '0', zx + 5, SKY - 13, '#1b1427');
+    b.fillStyle = '#1e1812'; b.fillRect(zx - 3, H - 8, 8, 8);
+    drawNum(b, '0', zx + 1, H - 7, '#f5c542');
+    /* Figuren */
+    const frames = [];
+    S.players.forEach((p, i) => {
+      const f = this.figs.get(p.id); if (!f) return;
+      let moving = false;
+      if (f.dur) {
+        const t = (now - f.t0) / f.dur;
+        if (t >= 1) { f.disp = f.to; f.dur = 0; }
+        else { const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; f.disp = f.from + (f.to - f.from) * e; moving = true; }
+      }
+      const tier = tierOf(Math.round(f.disp), S.settings);
+      f.tier = tier;
+      const x = this.X(f.disp);
+      const yb = SKY + i * this.LANE + this.LANE - 4;
+      let spr, bob = 0;
+      if (tier === 'zombie') spr = spriteCrawl(p.char, moving ? Math.floor(now / 240) % 2 : Math.floor((now + f.phase) / 1200) % 2);
+      else if (tier === 'walk') { const fr = moving ? Math.floor(now / 130) % 2 : 0; spr = spriteWalk(p.char, fr); bob = moving ? -(fr) : 0; }
+      else { const fr = moving ? Math.floor(now / 110) % 2 : 0; spr = spriteRide(p.char, fr); bob = moving ? -fr : 0; }
+      const sx = Math.round(x - spr.width / 2), sy = yb - spr.height + 1 + bob;
+      /* Staub */
+      if (moving && tier !== 'zombie') {
+        const ph = Math.floor(now / 90) % 3;
+        b.fillStyle = 'rgba(230,214,170,0.7)';
+        const dir = f.to >= f.from ? -1 : 1;
+        const bx = dir < 0 ? sx - 2 : sx + spr.width + 1;
+        b.fillRect(bx + dir * ph, yb - 1 - (ph % 2), 2, 1);
+        b.fillRect(bx + dir * (ph + 2), yb - 2, 1, 1);
+      }
+      if (f.out) b.globalAlpha = 0.5;
+      if (tier === 'glow') {
+        const pulse = 0.45 + 0.35 * Math.sin(now / 260 + f.phase);
+        const sil = silhouette(spr, '#ffe070');
+        b.globalAlpha = (f.out ? 0.5 : 1) * pulse;
+        b.drawImage(sil, sx - 1, sy); b.drawImage(sil, sx + 1, sy); b.drawImage(sil, sx, sy - 1); b.drawImage(sil, sx, sy + 1);
+        b.globalAlpha = f.out ? 0.5 : 1;
+      }
+      if (f.streak >= 3) this.drawFire(b, sx, sy, spr, now, f.phase);
+      b.drawImage(spr, sx, sy);
+      if (tier === 'glow') {
+        const k = Math.floor((now + f.phase) / 180);
+        for (let j = 0; j < 3; j++) {
+          const rx = sx + Math.floor(hash2(k, j) * (spr.width + 6)) - 3, ry = sy + Math.floor(hash2(j, k) * spr.height);
+          b.fillStyle = j ? '#fff6c0' : '#f5c542'; b.fillRect(rx, ry, 1, 1);
+        }
+      }
+      if (f.streak <= -3) this.drawCloud(b, Math.round(x), sy - 6, now, f.phase);
+      if (f.out) {
+        const zz = Math.floor((now + f.phase) / 500) % 3;
+        b.fillStyle = '#e9e2ff';
+        const zx2 = sx + spr.width - 2 + zz, zy2 = sy - 2 - zz * 2;
+        b.fillRect(zx2, zy2, 3, 1); b.fillRect(zx2 + 1, zy2 + 1, 1, 1); b.fillRect(zx2, zy2 + 2, 3, 1);
+      }
+      b.globalAlpha = 1;
+      frames.push({ f, x, top: sy });
+    });
+    /* Ausgabe */
+    const c = this.ctx;
+    c.imageSmoothingEnabled = false;
+    c.drawImage(this.buf, 0, 0, W * this.scale, H * this.scale);
+    /* Overlay */
+    const kc = this.kc, ovW = W * kc;
+    frames.forEach(({ f, x, top }) => {
+      const lx = clamp(x * kc, 4 + f.label.offsetWidth / 2, ovW - 4 - f.label.offsetWidth / 2);
+      const ly = Math.max((top - (f.streak <= -3 ? 9 : 0)) * kc - 3, f.label.offsetHeight + 1);
+      if (Math.abs(lx - (f._lx || 0)) > 0.3 || Math.abs(ly - (f._ly || 0)) > 0.3) {
+        f.label.style.transform = 'translate(' + (lx - f.label.offsetWidth / 2).toFixed(1) + 'px,' + (ly - f.label.offsetHeight).toFixed(1) + 'px)';
+        f._lx = lx; f._ly = ly;
+      }
+      if (f.bubble) {
+        const bw = f.bubble.offsetWidth;
+        const left = clamp(x * kc - bw / 2, 4, ovW - bw - 4);
+        const btop = ly - f.label.offsetHeight - 4;
+        f.bubble.style.left = left.toFixed(1) + 'px';
+        f.bubble.style.top = Math.max(btop, f.bubble.offsetHeight + 2).toFixed(1) + 'px';
+        f.bubble.style.setProperty('--ax', clamp(x * kc - left, 10, bw - 10).toFixed(1) + 'px');
+      }
+    });
+  },
+  drawCastle(b, x, y, pal, now) {
+    const c1 = pal.castle, c2 = pal.castle2;
+    b.fillStyle = c1;
+    b.fillRect(x + 4, y - 12, 20, 12);
+    b.fillRect(x, y - 18, 7, 18); b.fillRect(x + 21, y - 18, 7, 18);
+    b.fillRect(x + 11, y - 22, 6, 10);
+    for (let i = 0; i < 4; i++) { b.fillRect(x + i * 2, y - 20, 1, 2); b.fillRect(x + 21 + i * 2, y - 20, 1, 2); }
+    for (let i = 0; i < 10; i++) if (i % 2 === 0) b.fillRect(x + 4 + i * 2, y - 14, 2, 2);
+    b.fillRect(x + 11, y - 24, 1, 2); b.fillRect(x + 13, y - 24, 1, 2); b.fillRect(x + 15, y - 24, 1, 2);
+    b.fillStyle = c2;
+    b.fillRect(x + 6, y - 1, 16, 1); b.fillRect(x + 12, y - 6, 4, 6);
+    b.fillStyle = pal.win;
+    b.fillRect(x + 3, y - 13, 1, 2); b.fillRect(x + 24, y - 13, 1, 2); b.fillRect(x + 13, y - 19, 2, 2);
+    /* Fahne */
+    const ph = Math.floor(now / 300) % 2;
+    b.fillStyle = '#1b1427'; b.fillRect(x + 14, y - 31, 1, 9);
+    b.fillStyle = '#d63c3c'; b.fillRect(x + 15, y - 31, 5, 2); b.fillRect(x + 15, y - 29, 4 + ph, 1);
+    b.fillStyle = '#f5c542'; b.fillRect(x + 16, y - 30, 1, 1);
+  },
+  drawFire(b, sx, sy, spr, now, ph) {
+    const baseY = sy + Math.floor(spr.height * 0.8);
+    for (let j = 0; j < 7; j++) {
+      const fx = sx + 2 - j * 2;
+      const flick = Math.floor((Math.sin(now / 60 + j * 1.3 + ph) + 1) * 1.6);
+      const hgt = Math.max(0, 10 - j * 1.4 + flick) | 0;
+      for (let k = 0; k < hgt; k++) {
+        const rel = k / hgt;
+        b.fillStyle = rel < 0.3 ? '#fff1a0' : rel < 0.6 ? '#f5c542' : rel < 0.85 ? '#f08a24' : '#d63c3c';
+        b.fillRect(fx - Math.floor(k / 3), baseY - k, 2, 1);
+      }
+    }
+    for (let q = 0; q < 3; q++) {
+      const t = (now / 80 + q * 9 + ph) % 14;
+      b.fillStyle = q ? '#f08a24' : '#fff1a0';
+      b.fillRect(sx - 3 - Math.floor(t), baseY - 8 - Math.floor(t * 0.6), 1, 1);
+    }
+  },
+  drawCloud(b, cx, cy, now, ph) {
+    b.fillStyle = '#5d6480'; b.fillRect(cx - 6, cy - 1, 13, 3); b.fillRect(cx - 4, cy - 3, 8, 2); b.fillRect(cx - 1, cy - 4, 4, 1);
+    b.fillStyle = '#8a92b0'; b.fillRect(cx - 4, cy - 3, 3, 1); b.fillRect(cx - 5, cy - 1, 4, 1);
+    b.fillStyle = '#7fb0f0';
+    for (let j = 0; j < 4; j++) {
+      const dy = Math.floor((now / 55 + j * 7 + ph) % 9);
+      b.fillRect(cx - 5 + j * 3, cy + 3 + dy, 1, 2);
+    }
+  },
+
+  /* ---------- Sprechblasen ---------- */
+  bubble(id, text, ms) {
+    if (!S.settings.kiebitz || !text) return;
+    const f = this.figs.get(id); if (!f) return;
+    if (f.bubble) { f.bubble.remove(); clearTimeout(f.bubbleT); }
+    const el = document.createElement('div');
+    el.className = 'bubble';
+    el.textContent = text;
+    this.ov.appendChild(el);
+    f.bubble = el;
+    this.draw(performance.now());
+    f.bubbleT = setTimeout(() => {
+      el.classList.add('fade');
+      setTimeout(() => { el.remove(); if (f.bubble === el) f.bubble = null; }, 420);
+    }, ms || 3400);
+  },
+
+  /* ---------- Nach einem Spiel ---------- */
+  afterGame(g, before, after) {
+    const res = calcGame(g);
+    const dur = this.sync();
+    const name = g.player ? pname(g.player) : '';
+    const N = TXT.naunin;
+    /* Ton */
+    if (res.points >= 100) Sound.play('bigup');
+    else if (res.points > 0) Sound.play('up');
+    else if (res.points <= -150) Sound.play('bigdown');
+    else if (res.points < 0) Sound.play('down');
+    else Sound.play('blip');
+    /* Naunin */
+    const nLines = [nauninLine(g, res, name)];
+    const post = [];
+    let postFig = null;
+    if (g.player && before[g.player] && after[g.player]) {
+      const b0 = before[g.player], a0 = after[g.player];
+      const t0 = tierOf(b0.score, S.settings), t1 = tierOf(a0.score, S.settings);
+      const v = { name };
+      if (t0 !== t1) {
+        if (t1 === 'zombie') { post.push(fill(pick('nz', N.zombie), v)); postFig = pick('fz', TXT.fig.toZombie); setTimeout(() => Sound.play('zombie'), dur); }
+        else if (t0 === 'zombie') { post.push(fill(pick('nuz', N.unzombie), v)); postFig = pick('ffz', TXT.fig.fromZombie); }
+        else if (t1 === 'glow') { post.push(fill(pick('ng', N.glow), v)); postFig = pick('fg', TXT.fig.toGlow); setTimeout(() => Sound.play('shine'), dur); }
+        else if (t1 === 'ride' && t0 === 'walk') { post.push(fill(pick('nr', N.ride), v)); postFig = pick('fr', TXT.fig.toRide); setTimeout(() => Sound.play('horse'), dur * 0.6); }
+        else if (t1 === 'walk') { post.push(fill(pick('nur', N.unride), v)); postFig = pick('flh', TXT.fig.lostHorse); }
+      }
+      if (a0.streak === 3) { post.push(fill(pick('nf', N.fire), v)); postFig = postFig || pick('ff', TXT.fig.fire); }
+      if (a0.streak === -3) { post.push(fill(pick('nc', N.cloud), v)); postFig = postFig || pick('fc', TXT.fig.cloud); }
+    }
+    if (isLate() && !Race.lateSaid) { Race.lateSaid = true; post.push(pick('late', N.late)); }
+    setTimeout(() => {
+      this.k.say(nLines[0]);
+      post.forEach(t => this.k.say(t, { queue: true }));
+    }, 120);
+    /* Figuren */
+    if (g.player) {
+      const line = figLine(g, res);
+      setTimeout(() => this.bubble(g.player, line, 3000), 200);
+      if (postFig) setTimeout(() => this.bubble(g.player, postFig, 3000), Math.max(dur + 200, 3300));
+      const si = seatInfo(S.players.length, S.startDealer, S.games.length - 1);
+      const others = si.active.map(i => S.players[i].id).filter(id => id !== g.player);
+      if (others.length && g.type !== 'pass' && (g.type !== 'frei' || g.manual) && Math.random() < 0.6 && (res.points < 0 || res.points >= 60)) {
+        const who = others[Math.floor(Math.random() * others.length)];
+        const pool = res.points < 0 ? TXT.react.afterLoss : TXT.react.afterWin;
+        setTimeout(() => this.bubble(who, fill(pick('re' + (res.points < 0), pool), { name }), 2600), 1500);
+      }
+    }
+  },
+  askUndo() {
+    if (!S.games.length) return;
+    const g = S.games[S.games.length - 1];
+    const res = calcGame(g);
+    const what = g.type === 'pass' ? 'Eingepasst' : res.desc + ' für ' + pname(g.player) + ', ' + fmt(res.points);
+    confirmDialog('Letztes Spiel streichen? ' + what + '.', 'Streichen', 'Lassen', () => {
+      S.games.pop(); saveState();
+      this.sync();
+      Sound.play('down');
+      this.k.say(pick('undo', TXT.naunin.undo));
+    }, { danger: true });
+  }
+};
+
+function nauninLine(g, res, name) {
+  const N = TXT.naunin;
+  const v = { name, pts: Math.abs(res.points), abs: Math.abs(res.points), reiz: g.reiz || '' };
+  const won = res.points > 0;
+  let key;
+  if (g.type === 'pass') key = 'pass';
+  else if (g.type === 'frei' && g.manual) key = Math.abs(res.points) >= 120 ? (won ? 'bigWon' : 'bigLost') : (won ? 'won' : 'lost');
+  else if (g.type === 'frei') key = 'frei';
+  else if (g.type === 'ramsch') key = g.durchmarsch ? 'durchmarsch' : 'ramsch';
+  else if (g.type === 'null' && g.durchmarsch) key = 'nullDurchmarsch';
+  else if (res.overbid) key = 'overbid';
+  else if (g.kontra === 2 && Math.random() < 0.6) key = 're';
+  else if (g.bock && Math.random() < 0.35) key = 'bock';
+  else if (g.type === 'null') key = won ? 'nullWon' : (String(g.nullVar).indexOf('ouvert') === 0 ? 'nullOuvertLost' : 'nullLost');
+  else if (won && ((g.achieved || 0) >= 2 || (g.hand && (g.announced || 0) >= 2))) key = 'schwarzWon';
+  else if (!won && (g.achieved || 0) >= 1) key = 'schneiderLost';
+  else if (won && g.achieved === 1 && Math.random() < 0.5) key = 'schneiderWon';
+  else if (g.kontra === 1 && Math.random() < 0.6) key = won ? 'kontraWon' : 'kontraLost';
+  else {
+    const opts = [];
+    if (g.type === 'grand') opts.push(won ? 'grandWon' : 'grandLost');
+    if (g.hand) opts.push(won ? 'handWon' : 'handLost');
+    if (Math.abs(res.points) >= 120) opts.push(won ? 'bigWon' : 'bigLost');
+    opts.push(won ? (g.mit ? 'wonMit' : 'wonOhne') : (g.mit ? 'lostMit' : 'lostOhne'));
+    opts.push(won ? 'won' : 'lost');
+    key = opts[Math.floor(Math.random() * Math.min(opts.length, 3))];
+  }
+  return fill(pick('n-' + key, N[key]), v);
+}
+
+function figLine(g, res) {
+  const F = TXT.fig;
+  const won = res.points > 0;
+  const r = Math.random;
+  let key;
+  if (g.type === 'pass') return '';
+  if (g.type === 'frei' && g.manual) key = won ? (res.points < 40 ? 'winSmall' : res.points < 100 ? 'winMid' : 'winBig') : (Math.abs(res.points) >= 150 ? 'loseBig' : 'lose');
+  else if (g.type === 'frei') key = won ? 'freiPlus' : 'freiMinus';
+  else if (g.type === 'ramsch') key = g.durchmarsch ? 'durchmarsch' : 'ramsch';
+  else if (g.type === 'null' && g.durchmarsch) key = 'nullDurchmarsch';
+  else if (won) {
+    if ((g.achieved || 0) >= 2 || (g.hand && (g.announced || 0) >= 2)) key = 'schwarz';
+    else if (g.achieved === 1 && r() < 0.5) key = 'schneider';
+    else if (g.type === 'null') key = String(g.nullVar).indexOf('ouvert') === 0 ? 'nullOuvertWin' : 'nullWin';
+    else if (g.type === 'grand' && r() < 0.6) key = 'grand';
+    else if (g.hand && r() < 0.5) key = 'hand';
+    else if (g.kontra && r() < 0.6) key = 'kontraWin';
+    else key = res.points < 40 ? 'winSmall' : res.points < 100 ? 'winMid' : 'winBig';
+  } else {
+    if (res.overbid) key = 'overbid';
+    else if (g.type === 'null') key = String(g.nullVar).indexOf('ouvert') === 0 ? 'nullOuvertLose' : 'nullLose';
+    else if (g.kontra && r() < 0.5) key = 'kontraLose';
+    else if ((g.achieved || 0) >= 1) key = 'schneiderLose';
+    else if (g.type === 'grand' && r() < 0.6) key = 'grandLose';
+    else if (g.hand && r() < 0.6) key = 'handLose';
+    else key = Math.abs(res.points) >= 150 ? 'loseBig' : 'lose';
+  }
+  return pick('f-' + key, F[key]);
+}
+
+/* ===== Spiel eintragen ===== */
+function seatFromDealer(d) {
+  const n = S.players.length;
+  const active = [(d + 1) % n, (d + 2) % n, (d + 3) % n];
+  const out = []; for (let i = 0; i < n; i++) if (!active.includes(i)) out.push(i);
+  return { dealer: d, active, out };
+}
+const SUITSYM = { karo: '♦', herz: '♥', pik: '♠', kreuz: '♣' };
+
+const Entry = {
+  e: null, editIdx: null, si: null, root: null,
+  open(editIdx) {
+    const n = S.players.length;
+    const isEdit = editIdx !== null && editIdx !== undefined;
+    const orig = isEdit ? S.games[editIdx] : null;
+    let d;
+    if (orig && orig.dealerId) { d = S.players.findIndex(p => p.id === orig.dealerId); if (d < 0) d = 0; }
+    else d = seatInfo(n, S.startDealer, isEdit ? editIdx : S.games.length).dealer;
+    this.si = seatFromDealer(d);
+    this.editIdx = isEdit ? editIdx : null;
+    this.e = Object.assign({ type: null, player: null, won: true, kontra: 0, bock: false, achieved: 0, announced: 0, hand: false, overbid: false, reiz: null, showAll: false, moreSp: false, freiSign: 1, freiAbs: '', ramschPts: '' },
+      orig ? JSON.parse(JSON.stringify(orig)) : {});
+    if (orig && orig.type === 'frei') { this.e.freiSign = orig.freiPts < 0 ? -1 : 1; this.e.freiAbs = Math.abs(orig.freiPts); }
+    if (orig && orig.player && !this.si.active.map(i => S.players[i].id).includes(orig.player)) this.e.showAll = true;
+    if (orig && orig.spitzen > 4) this.e.moreSp = true;
+    this.manual = orig ? !!orig.manual : !!S.settings.manual;
+    if (this.manual && !orig) { this.e.type = 'frei'; this.e.manual = true; }
+    const nr = isEdit ? editIdx + 1 : S.games.length + 1;
+    const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="entry-h">' +
+      '<div class="sheet-head"><div style="flex:1;min-width:0"><h2 id="entry-h">' + (isEdit ? 'Spiel ' + nr + ' ändern' : 'Spiel ' + nr) + '</h2>' +
+      '<div class="sub">Geber ' + esc(S.players[d].name) + (n > 3 ? ', Pause ' + esc(listNames(this.si.out.map(i => S.players[i].name))) : '') + '</div></div>' +
+      '<button class="xbtn" type="button" data-close aria-label="Schließen">×</button></div>' +
+      '<div class="sheet-body" id="entry-body"></div>' +
+      '<div class="sheet-foot"><div class="preview"><div class="pv-desc" id="pv-desc"></div><div class="pv-pts" id="pv-pts"></div></div>' +
+      '<button class="btn" id="entry-ok" type="button">' + (isEdit ? 'Speichern' : 'Eintragen') + '</button></div></div>';
+    const w = Layer.open(html);
+    this.root = w;
+    $('[data-close]', w).addEventListener('click', () => Layer.close());
+    $('#entry-ok', w).addEventListener('click', () => this.submit());
+    const body = $('#entry-body', w);
+    body.addEventListener('click', ev => this.onClick(ev));
+    body.addEventListener('input', ev => this.onInput(ev));
+    body.addEventListener('change', ev => this.onInput(ev));
+    this.render();
+  },
+  chip(k, v, label, on, extra) {
+    return '<button type="button" class="chip' + (extra || '') + (on ? ' on' : '') + '" data-k="' + k + '" data-v="' + esc(String(v)) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + label + '</button>';
+  },
+  render() {
+    const e = this.e, body = $('#entry-body', this.root);
+    const keepScroll = body.scrollTop;
+    const n = S.players.length;
+    let h = '';
+    if (this.manual) { this.renderManual(body, keepScroll); return; }
+    /* Wer */
+    if (e.type !== 'pass') {
+      const all = e.showAll || e.type === 'frei';
+      const label = e.type === 'ramsch' ? (e.durchmarsch ? 'Wer ist durchmarschiert?' : 'Wer hat verloren?') : e.type === 'null' && e.durchmarsch ? 'Wer ist durchmarschiert?' : e.type === 'frei' ? 'Für wen?' : 'Wer spielt?';
+      h += '<div class="sec"><span class="lbl">' + label + '</span><div class="chips">';
+      const idxs = all ? S.players.map((_, i) => i) : this.si.active;
+      const pos = ['VH', 'MH', 'HH'];
+      idxs.forEach(i => {
+        const p = S.players[i];
+        const ai = this.si.active.indexOf(i);
+        h += this.chip('player', p.id, esc(p.name) + (ai >= 0 ? ' <small>' + pos[ai] + '</small>' : ' <small>PAUSE</small>'), e.player === p.id);
+      });
+      if (n > 3 && e.type !== 'frei') h += this.chip('showAll', !e.showAll, e.showAll ? 'Nur die drei' : 'Andere', false);
+      h += '</div></div>';
+    }
+    /* Was */
+    h += '<div class="sec"><span class="lbl">Was wurde gespielt?</span><div class="typegrid">';
+    ['karo', 'herz', 'pik', 'kreuz'].forEach(s => {
+      h += this.chip('pick', 'farbe:' + s, '<span class="sym" style="color:var(--s-' + s + ')">' + SUITSYM[s] + '</span>' + SUIT_LABEL[s] + '<small>' + GRUND[s] + '</small>', e.type === 'farbe' && e.suit === s);
+    });
+    h += this.chip('pick', 'grand', '<span class="sym" style="font-size:13px;letter-spacing:-1px"><span style="color:var(--s-kreuz)">♣</span><span style="color:var(--s-pik)">♠</span><span style="color:var(--s-herz)">♥</span><span style="color:var(--s-karo)">♦</span></span>Grand<small>24</small>', e.type === 'grand');
+    h += this.chip('pick', 'null', '<span class="sym" style="font-family:var(--f-num);font-size:14px">0</span>Null<small>23+</small>', e.type === 'null');
+    h += this.chip('pick', 'ramsch', '<span class="sym" style="font-family:var(--f-num);font-size:14px">R</span>Ramsch<small>FREI</small>', e.type === 'ramsch');
+    h += this.chip('pick', 'pass', '<span class="sym" style="font-family:var(--f-num);font-size:14px">·</span>Eingepasst<small>0</small>', e.type === 'pass');
+    h += '</div><div class="chips">' + this.chip('pick', 'frei', 'Freie Eingabe <small>KORREKTUR</small>', e.type === 'frei') + '</div></div>';
+    /* Details */
+    if (e.type === 'farbe' || e.type === 'grand') {
+      const max = e.type === 'grand' ? 4 : (e.moreSp ? 11 : 4);
+      h += '<div class="sec"><span class="lbl">Spitzen</span>';
+      [true, false].forEach(mit => {
+        h += '<div class="sp-row"><span class="sp-l">' + (mit ? 'mit' : 'ohne') + '</span>';
+        for (let k = 1; k <= max; k++) h += this.chip('sp', (mit ? 'm' : 'o') + k, String(k), e.mit === mit && e.spitzen === k, ' sq');
+        h += '</div>';
+      });
+      if (e.type === 'farbe' && !e.moreSp) h += '<div class="chips">' + this.chip('moreSp', true, 'Mehr als 4 Spitzen', false) + '</div>';
+      h += '</div>';
+      h += '<div class="sec"><span class="lbl">Ansagen</span><div class="chips">' + this.chip('hand', !e.hand, 'Hand', e.hand) + '</div>';
+      if (e.hand) {
+        h += '<div class="chips">' + this.chip('announced', 0, 'Keine Ansage', !e.announced) + this.chip('announced', 1, 'Schneider angesagt', e.announced === 1) +
+          this.chip('announced', 2, 'Schwarz angesagt', e.announced === 2) + this.chip('announced', 3, 'Ouvert', e.announced === 3) + '</div>';
+      }
+      h += '</div>';
+      h += '<div class="sec"><span class="lbl">Ergebnis</span><div class="chips">' + this.chip('won', true, 'Gewonnen', e.won === true) + this.chip('won', false, 'Verloren', e.won === false) + '</div>';
+      h += '<div class="chips">' + this.chip('achieved', 0, 'Kein Schneider', !e.achieved) + this.chip('achieved', 1, 'Schneider', e.achieved === 1) + this.chip('achieved', 2, 'Schwarz', e.achieved === 2) + '</div>';
+      h += '<p class="note">Schneider und Schwarz zählen, egal welche Seite sie kassiert.</p>';
+      h += '<div class="chips" style="align-items:center">' + this.chip('overbid', !e.overbid, 'Überreizt', e.overbid);
+      if (e.overbid) {
+        h += '<label class="sr" for="reiz">Gereizt bis</label><select id="reiz" class="numin" data-in="reiz">' +
+          REIZWERTE.map(r => '<option value="' + r + '"' + (r === e.reiz ? ' selected' : '') + '>bis ' + r + '</option>').join('') + '</select>';
+      }
+      h += '</div></div>';
+    }
+    if (e.type === 'null') {
+      h += '<div class="sec"><span class="lbl">Welcher Null?</span><div class="chips">';
+      Object.entries(NULLSPIELE).forEach(([k, v]) => { h += this.chip('nullVar', k, v.name + ' <small>' + v.wert + '</small>', e.nullVar === k); });
+      h += '</div></div>';
+      h += '<div class="sec"><span class="lbl">Ergebnis</span><div class="chips">' + this.chip('nres', 'won', 'Gewonnen', !e.durchmarsch && e.won === true) + this.chip('nres', 'lost', 'Verloren', !e.durchmarsch && e.won === false) +
+        this.chip('nres', 'durch', 'Durchmarsch <small>+120</small>', !!e.durchmarsch) + '</div>' +
+        '<p class="note">' + (e.durchmarsch ? 'Alle Stiche geholt statt keinen. Das gibt +120.' : 'Durchmarsch hei\u00dft: alle Stiche geholt. Das gibt +120.') + '</p></div>';
+    }
+    if (e.type === 'farbe' || e.type === 'grand' || e.type === 'null') {
+      h += '<div class="sec"><span class="lbl">Kontra, Re, Bock</span><div class="chips">' + this.chip('kontra', 0, 'Kein Kontra', !e.kontra) +
+        this.chip('kontra', 1, 'Kontra <small>×2</small>', e.kontra === 1) + this.chip('kontra', 2, 'Re <small>×4</small>', e.kontra === 2) + '</div>' +
+        '<div class="chips">' + this.chip('bock', !e.bock, 'Bock <small>×2</small>', e.bock) + '</div></div>';
+    }
+    if (e.type === 'ramsch') {
+      h += '<div class="sec"><span class="lbl">Ramsch</span><div class="chips">' + this.chip('durchmarsch', !e.durchmarsch, 'Durchmarsch <small>+120</small>', e.durchmarsch) + this.chip('bock', !e.bock, 'Bock <small>×2</small>', e.bock) + '</div>';
+      if (!e.durchmarsch) {
+        h += '<label for="rp" class="lbl" style="font-family:var(--f-body);font-size:15px;text-transform:none;letter-spacing:0;color:var(--parch-ink)">Minuspunkte' + (e.player ? ' für ' + esc(pname(e.player)) : '') + '</label>' +
+          '<input id="rp" class="numin" data-in="ramschPts" type="number" inputmode="numeric" min="1" max="999" placeholder="z. B. 47" value="' + esc(e.ramschPts) + '">';
+        h += '<p class="note">Nur der Verlierer bekommt Minuspunkte. Durchmarsch gibt es nur mit allen 120 Augen.</p>';
+      } else h += '<p class="note">Alle Stiche, alle 120 Augen. Das gibt +120 für den Durchmarschierer.</p>';
+      h += '</div>';
+    }
+    if (e.type === 'pass') h += '<p class="note">Keiner wollte spielen. Keine Punkte, der Geber rückt weiter.</p>';
+    if (e.type === 'frei') {
+      h += '<div class="sec"><span class="lbl">Punkte</span><div class="chips" style="align-items:center">' + this.chip('freiSign', 1, 'Plus', e.freiSign === 1, ' sq') + this.chip('freiSign', -1, 'Minus', e.freiSign === -1, ' sq') +
+        '<label class="sr" for="fp">Punkte</label><input id="fp" class="numin" data-in="freiAbs" type="number" inputmode="numeric" min="1" max="9999" placeholder="0" value="' + esc(e.freiAbs) + '"></div>' +
+        '<p class="note">Für Hausregeln und Korrekturen. Zählt nicht in Serien und Ehrentitel.</p></div>';
+    }
+    if (this.editIdx === null) h += '<button type="button" class="linkbtn" data-k="mode" data-v="manual" style="color:var(--parch-ink)">Ab jetzt wieder selbst eintragen</button>';
+    if (this.editIdx !== null) h += '<button type="button" class="linkbtn" data-del>Dieses Spiel löschen</button>';
+    body.innerHTML = h;
+    body.scrollTop = keepScroll;
+    const del = $('[data-del]', body);
+    if (del) del.addEventListener('click', () => this.askDelete());
+    this.preview();
+  },
+  whoBlock(label) {
+    const e = this.e, n = S.players.length;
+    let h = '<div class="sec"><span class="lbl">' + label + '</span><div class="chips">';
+    const idxs = e.showAll ? S.players.map((_, i) => i) : this.si.active;
+    const pos = ['VH', 'MH', 'HH'];
+    idxs.forEach(i => {
+      const p = S.players[i];
+      const ai = this.si.active.indexOf(i);
+      h += this.chip('player', p.id, esc(p.name) + (ai >= 0 ? ' <small>' + pos[ai] + '</small>' : ' <small>PAUSE</small>'), e.player === p.id);
+    });
+    if (n > 3) h += this.chip('showAll', !e.showAll, e.showAll ? 'Nur die drei' : 'Andere', false);
+    return h + '</div></div>';
+  },
+  renderManual(body, keepScroll) {
+    const e = this.e;
+    const isPass = e.type === 'pass';
+    let h = '';
+    if (!isPass) h += this.whoBlock('Wer hat gespielt?');
+    h += '<div class="sec"><span class="lbl">Punkte</span>';
+    if (!isPass) {
+      h += '<div class="chips" style="align-items:center">' + this.chip('freiSign', 1, 'Plus', e.freiSign === 1, ' sq') + this.chip('freiSign', -1, 'Minus', e.freiSign === -1, ' sq') +
+        '<label class="sr" for="fp">Punkte</label><input id="fp" class="numin" data-in="freiAbs" type="number" inputmode="numeric" min="1" max="9999" placeholder="0" value="' + esc(e.freiAbs) + '"></div>';
+    } else h += '<p class="note">Keiner hat gespielt. Keine Punkte, der Geber r\u00fcckt weiter.</p>';
+    h += '<div class="chips">' + this.chip('mpass', !isPass, 'Eingepasst', isPass) + '</div></div>';
+    if (this.editIdx === null) h += '<button type="button" class="linkbtn" data-k="mode" data-v="calc" style="color:var(--parch-ink)">Spiel ausrechnen lassen</button>';
+    else h += '<button type="button" class="linkbtn" data-del>Dieses Spiel l\u00f6schen</button>';
+    body.innerHTML = h;
+    body.scrollTop = keepScroll;
+    const del = $('[data-del]', body);
+    if (del) del.addEventListener('click', () => this.askDelete());
+    this.preview();
+  },
+  parse(v) { if (v === 'true') return true; if (v === 'false') return false; if (/^-?\d+$/.test(v)) return Number(v); return v; },
+  onClick(ev) {
+    const c = ev.target.closest('[data-k]'); if (!c) return;
+    Sound.play('tap');
+    const e = this.e, k = c.dataset.k, v = this.parse(c.dataset.v);
+    if (k === 'mode') {
+      this.manual = v === 'manual';
+      S.settings.manual = this.manual; saveState(); Race.updateUI();
+      e.type = this.manual ? 'frei' : null; e.manual = this.manual; e.durchmarsch = false;
+      this.render(); return;
+    }
+    if (k === 'mpass') { e.type = v ? 'pass' : 'frei'; e.manual = true; this.render(); return; }
+    if (k === 'nres') { e.durchmarsch = v === 'durch'; e.won = v !== 'lost'; this.render(); return; }
+    if (k === 'pick') {
+      const prev = e.type;
+      if (String(v).indexOf('farbe:') === 0) { e.type = 'farbe'; e.suit = v.split(':')[1]; }
+      else { e.type = v; }
+      if (e.type === 'grand' && e.spitzen > 4) e.spitzen = null;
+      if (prev !== e.type && (e.type === 'ramsch' || e.type === 'frei')) { e.won = true; }
+      if (prev !== e.type) { e.durchmarsch = false; e.manual = false; }
+      if (e.type === 'null' && !e.nullVar) e.nullVar = null;
+    } else if (k === 'sp') {
+      e.mit = v[0] === 'm'; e.spitzen = Number(v.slice(1));
+    } else if (k === 'hand') {
+      e.hand = v; if (!v) e.announced = 0;
+    } else if (k === 'overbid') {
+      e.overbid = v;
+      if (v && !e.reiz) {
+        const tmp = calcGame(Object.assign({}, e, { overbid: false, player: e.player || 'x' }));
+        e.reiz = REIZWERTE.find(r => r > tmp.value) || 18;
+      }
+    } else if (k === 'showAll') {
+      e.showAll = v;
+    } else {
+      e[k] = v;
+    }
+    this.render();
+  },
+  onInput(ev) {
+    const t = ev.target; const k = t.dataset && t.dataset.in; if (!k) return;
+    this.e[k] = k === 'reiz' ? Number(t.value) : t.value;
+    this.preview();
+  },
+  build() {
+    const e = this.e;
+    const g = { type: e.type };
+    if (e.type === 'farbe' || e.type === 'grand') {
+      Object.assign(g, { player: e.player, spitzen: e.spitzen, mit: e.mit, hand: !!e.hand, announced: e.hand ? (e.announced || 0) : 0, achieved: e.achieved || 0, won: e.won, overbid: !!e.overbid, reiz: e.overbid ? e.reiz : null, kontra: e.kontra || 0, bock: !!e.bock });
+      if (e.type === 'farbe') g.suit = e.suit;
+    } else if (e.type === 'null') {
+      Object.assign(g, { player: e.player, nullVar: e.nullVar, won: e.durchmarsch ? true : e.won, durchmarsch: !!e.durchmarsch, kontra: e.kontra || 0, bock: !!e.bock });
+    } else if (e.type === 'ramsch') {
+      Object.assign(g, { player: e.player, durchmarsch: !!e.durchmarsch, ramschPts: e.durchmarsch ? 0 : Math.abs(parseInt(e.ramschPts, 10) || 0), bock: !!e.bock });
+    } else if (e.type === 'frei') {
+      Object.assign(g, { player: e.player, freiPts: (e.freiSign || 1) * Math.abs(parseInt(e.freiAbs, 10) || 0) });
+      if (e.manual) g.manual = true;
+    } else if (e.type === 'pass' && e.manual) {
+      g.manual = true;
+    }
+    return g;
+  },
+  preview() {
+    const g = this.build();
+    const r = calcGame(g);
+    const d = $('#pv-desc', this.root), p = $('#pv-pts', this.root), ok = $('#entry-ok', this.root);
+    let hint = '';
+    if (!g.type) hint = 'Erst Spieler und Spiel wählen';
+    else if (g.type !== 'pass' && !g.player) hint = g.type === 'ramsch' ? 'Wer hat verloren?' : 'Wer spielt?';
+    else if ((g.type === 'farbe' || g.type === 'grand') && !g.spitzen) hint = 'Mit oder ohne wie viele?';
+    else if (g.type === 'null' && !g.nullVar) hint = 'Welcher Null?';
+    else if (g.type === 'ramsch' && !g.durchmarsch && !g.ramschPts) hint = 'Wie viele Minuspunkte?';
+    else if (g.type === 'frei' && !g.freiPts) hint = 'Wie viele Punkte?';
+    if (this.manual && g.type === 'frei' && !g.player) hint = 'Wer hat gespielt?';
+    if (hint || !r.valid) {
+      d.textContent = hint || 'Angaben fehlen';
+      p.textContent = '···'; p.className = 'pv-pts';
+      ok.disabled = true;
+    } else {
+      d.textContent = (g.player ? pname(g.player) + ': ' : '') + (g.type === 'pass' ? r.formula : g.manual ? 'selbst eingetragen' : r.desc + ' · ' + r.formula);
+      p.textContent = g.type === 'pass' ? '0' : fmt(r.points);
+      p.className = 'pv-pts' + (r.points < 0 ? ' neg' : r.points > 0 ? ' pos' : '');
+      ok.disabled = false;
+    }
+  },
+  submit() {
+    const g = this.build();
+    const r = calcGame(g);
+    if (!r.valid) return;
+    const isEdit = this.editIdx !== null;
+    const before = stats();
+    if (isEdit) {
+      const orig = S.games[this.editIdx];
+      g.dealerId = orig.dealerId; g.ts = orig.ts;
+      S.games[this.editIdx] = g;
+    } else {
+      g.dealerId = S.players[this.si.dealer].id; g.ts = Date.now();
+      S.games.push(g);
+    }
+    saveState();
+    const after = stats();
+    Layer.close();
+    if (isEdit) { Race.sync(); Sound.play('blip'); Race.k.say(pick('ed', TXT.naunin.edited)); }
+    else Race.afterGame(g, before, after);
+  },
+  askDelete() {
+    const i = this.editIdx;
+    confirmDialog('Spiel ' + (i + 1) + ' löschen? Die Geber-Reihenfolge danach verschiebt sich dann um eins.', 'Löschen', 'Behalten', () => {
+      S.games.splice(i, 1); saveState(); Race.sync(); Sound.play('down');
+      Race.k.say(pick('undo', TXT.naunin.undo));
+    }, { danger: true });
+  }
+};
+
+/* ===== Spielliste, Hausregeln, Auswertung ===== */
+function openList() {
+  const ps = S.players;
+  const totals = {}; ps.forEach(p => { totals[p.id] = 0; });
+  let rows = '';
+  S.games.forEach((g, i) => {
+    const r = calcGame(g);
+    if (g.player && totals[g.player] !== undefined) totals[g.player] += r.points;
+    const desc = g.type === 'pass' ? 'Eingepasst' : r.desc + (r.overbid ? ', überreizt' : '') + (g.kontra === 1 ? ', Kontra' : g.kontra === 2 ? ', Re' : '') + (g.bock ? ', Bock' : '');
+    rows += '<tr data-i="' + i + '" tabindex="0"><td class="nr">' + (i + 1) + '</td><td class="l desc-cell" title="' + esc(desc) + '">' + esc(desc) + '</td>' +
+      ps.map(p => (g.player === p.id && g.type !== 'pass')
+        ? '<td><span class="d ' + (r.points < 0 ? 'neg' : 'pos') + '">' + fmt(r.points) + '</span><span class="t">' + fmtScore(totals[p.id]) + '</span></td>'
+        : '<td></td>').join('') + '</tr>';
+  });
+  const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="list-h">' +
+    '<div class="sheet-head"><div style="flex:1;min-width:0"><h2 id="list-h">Spielliste</h2><div class="sub">' + S.games.length + ' Spiele. Antippen zum Ändern.</div></div>' +
+    '<button class="xbtn" type="button" data-close aria-label="Schließen">×</button></div>' +
+    '<div class="sheet-body">' + (S.games.length
+      ? '<div class="listwrap"><table class="liste"><thead><tr><th class="l">Nr</th><th class="l">Spiel</th>' + ps.map(p => '<th>' + esc(p.name) + '</th>').join('') + '</tr></thead><tbody>' + rows +
+        '</tbody><tfoot><tr><td></td><td class="l">Stand</td>' + ps.map(p => '<td>' + fmtScore(totals[p.id]) + '</td>').join('') + '</tr></tfoot></table></div>'
+      : '<p class="note">Noch kein Spiel eingetragen. Der Zettel ist so leer wie mein Terminkalender.</p>') +
+    '</div></div>';
+  const w = Layer.open(html);
+  $('[data-close]', w).addEventListener('click', () => Layer.close());
+  $$('tbody tr', w).forEach(tr => {
+    const go = () => { const i = +tr.dataset.i; Layer.close(); Entry.open(i); };
+    tr.addEventListener('click', go);
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  });
+}
+
+function openSettings() {
+  const st = S.settings;
+  const html = '<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-h">' +
+    '<div class="sheet-head"><div style="flex:1"><h2 id="set-h">Hausregeln</h2><div class="sub">Gilt für diesen Tisch</div></div>' +
+    '<button class="xbtn" type="button" data-close aria-label="Schließen">×</button></div>' +
+    '<div class="sheet-body">' +
+    '<div class="set-row"><span><label for="set-pferd"><b>Pferd ab</b></label><small>Ab diesem Punktestand wird geritten</small></span><input id="set-pferd" class="numin" type="number" inputmode="numeric" min="10" max="5000" value="' + st.pferd + '"></div>' +
+    '<div class="set-row"><span><label for="set-glanz"><b>Leuchten ab</b></label><small>Ab hier strahlt die Figur golden</small></span><input id="set-glanz" class="numin" type="number" inputmode="numeric" min="20" max="9999" value="' + st.glanz + '"></div>' +
+    '<div class="set-row"><span><b>Im Minus</b><small>Wer unter null fällt, kriecht als Zombie durch den Sumpf</small></span></div>' +
+    '<div class="set-row"><span><b>Spiel ausrechnen lassen</b><small>Statt Punkte selbst einzutragen das Spiel antippen: Farbe, Spitzen, Hand und so weiter</small></span><button type="button" class="chip' + (!st.manual ? ' on' : '') + '" data-t="calc" aria-pressed="' + !st.manual + '">' + (!st.manual ? 'An' : 'Aus') + '</button></div>' +
+    '<div class="set-row"><span><b>Ton</b><small>Chiptune-Geräusche</small></span><button type="button" class="chip' + (st.sound ? ' on' : '') + '" data-t="sound" aria-pressed="' + st.sound + '">' + (st.sound ? 'An' : 'Aus') + '</button></div>' +
+    '<div class="set-row"><span><b>Kiebitz</b><small>Kommentare von Naunin und den Figuren</small></span><button type="button" class="chip' + (st.kiebitz ? ' on' : '') + '" data-t="kiebitz" aria-pressed="' + st.kiebitz + '">' + (st.kiebitz ? 'Redet' : 'Maulkorb') + '</button></div>' +
+    '<div class="sec" style="margin-top:6px"><span class="lbl">Neu anfangen</span>' +
+    '<button type="button" class="btn dark" data-a="revanche">Neues Spiel, gleiche Runde</button>' +
+    '<button type="button" class="btn red" data-a="fresh">Ganz neu, andere Leute</button></div>' +
+    '<p class="note">Der Spielstand bleibt auf diesem Gerät gespeichert, auch wenn der Akku schlappmacht.</p>' +
+    '<p class="note" style="font-family:var(--f-num);font-size:9px;letter-spacing:1px">VERSION ' + APP_VERSION + ' \u00b7 18.10.2026</p>' +
+    '</div></div>';
+  const w = Layer.open(html);
+  $('[data-close]', w).addEventListener('click', () => Layer.close());
+  const apply = () => {
+    const p = parseInt($('#set-pferd', w).value, 10), g = parseInt($('#set-glanz', w).value, 10);
+    if (p > 0) S.settings.pferd = p;
+    if (g > 0) S.settings.glanz = Math.max(g, S.settings.pferd + 1);
+    saveState(); Race.updateUI();
+  };
+  $('#set-pferd', w).addEventListener('change', apply);
+  $('#set-glanz', w).addEventListener('change', apply);
+  $$('[data-t]', w).forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.t;
+    if (k === 'calc') S.settings.manual = !S.settings.manual; else S.settings[k] = !S.settings[k];
+    saveState();
+    const on = k === 'calc' ? !S.settings.manual : S.settings[k];
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+    b.textContent = k === 'kiebitz' ? (on ? 'Redet' : 'Maulkorb') : (on ? 'An' : 'Aus');
+    Race.updateToggles(); Race.k.refresh(); Race.updateUI(); Sound.play('tap');
+  }));
+  $('[data-a=revanche]', w).addEventListener('click', () => confirmDialog('Neues Spiel mit denselben Leuten? Die Punkte von jetzt verschwinden.', 'Neu anfangen', 'Abbrechen', revanche, { danger: true }));
+  $('[data-a=fresh]', w).addEventListener('click', () => confirmDialog('Ganz neu anfangen? Spieler, Sitzordnung und Punkte werden zurückgesetzt.', 'Zurücksetzen', 'Abbrechen', freshStart, { danger: true }));
+}
+
+function askEvaluate() {
+  if (!S.games.length) { Race.k.say(TXT.evaluate.empty, { force: true }); return; }
+  const n = S.players.length;
+  let text = TXT.evaluate.ask;
+  const rest = S.games.length % n;
+  if (rest) {
+    const st = stats();
+    const counts = S.players.map(p => st[p.id].deals);
+    const mx = Math.max.apply(null, counts);
+    const few = S.players.filter(p => st[p.id].deals < mx).map(p => p.name);
+    if (few.length) text += ' ' + fill(TXT.evaluate.unequal, { names: listNames(few), verb: few.length > 1 ? 'haben' : 'hat', k: n - rest === 1 ? 'ein Spiel' : (n - rest) + ' Spiele' });
+  }
+  confirmDialog(text, 'Auswerten', 'Weiterspielen', goPodium);
+}
+function goPodium() {
+  S.phase = 'podium'; S.finishedAt = Date.now(); saveState();
+  Podium.show(true);
+}
+function revanche() {
+  S.startDealer = (S.startDealer + S.games.length) % S.players.length;
+  S.games = []; S.phase = 'race'; S.finishedAt = null; saveState();
+  Race.show(true);
+  Race.k.say('Revanche! Alle wieder auf null. Ich mag Wiederholungen, da weiß ich schon, wer verliert.');
+}
+function freshStart() {
+  const old = S.players.slice();
+  const settings = S.settings;
+  S = newState();
+  S.settings = settings;
+  S.players = old;
+  S.draft.names = old.map(p => p.name);
+  while (S.draft.names.length < 3) S.draft.names.push('');
+  S.step = 1;
+  saveState();
+  Onb.show();
+}
+
+/* ===== Siegerehrung ===== */
+function ranking() {
+  const st = stats();
+  return S.players.slice().sort((a, b) => st[b.id].score - st[a.id].score).map(p => ({ p, s: st[p.id] }));
+}
+
+function honors(st) {
+  const T = TXT.titles, ps = S.players, out = [];
+  const top = (fn, min) => {
+    let best = null, val = -Infinity, tie = false;
+    ps.forEach(p => { const v = fn(st[p.id]); if (v > val) { val = v; best = p; tie = false; } else if (v === val) tie = true; });
+    return best && val >= min ? { p: best, v: val, tie } : null;
+  };
+  const used = {};
+  const add = (key, r, vars) => {
+    if (!r) return;
+    if ((used[r.p.id] || 0) >= 2) return;
+    used[r.p.id] = (used[r.p.id] || 0) + 1;
+    out.push({ title: T[key].title, name: r.p.name, line: fill(T[key].line, vars) });
+  };
+  const b = top(s => s.best ? s.best.points : -Infinity, 1);
+  if (b) add(st[b.p.id].best.desc ? 'best' : 'bestManual', b, { desc: st[b.p.id].best.desc, pts: st[b.p.id].best.points });
+  const g = top(s => s.grands, 1); if (g) add('grand', g, { n: g.v });
+  const pe = top(s => s.lost, 2); if (pe) add('pech', pe, { n: pe.v, spiele: spiele(pe.v) });
+  const played = ps.map(p => st[p.id].played);
+  if (Math.max.apply(null, played) > 0 && Math.min.apply(null, played) !== Math.max.apply(null, played)) {
+    const m = top(s => -s.played, -Infinity); if (m && !m.tie) add('mauer', m, { n: -m.v, spiele: spiele(-m.v) });
+  }
+  const h = top(s => s.overbid, 1); if (h) add('hoch', h, { n: h.v });
+  const ph = top(s => (s.min < 0 && s.score > 0) ? s.score - s.min : -Infinity, 1);
+  if (ph) add('phoenix', ph, { min: fmtScore(st[ph.p.id].min), final: fmtScore(st[ph.p.id].score) });
+  const z = top(s => -s.min, 1); if (z) add('zombie', z, { min: fmtScore(st[z.p.id].min) });
+  const nn = top(s => s.nullLost, 1); if (nn) add('nullnr', nn, { n: nn.v });
+  const ra = top(s => s.ramschLost, 1); if (ra) add('ramsch', ra, { n: ra.v });
+  const du = top(s => s.durchmarsch, 1); if (du) add('durch', du, { n: du.v });
+  return out.slice(0, 6);
+}
+
+const Podium = {
+  k: null, running: false, conf: [], toms: [], splats: [],
+  init() {
+    this.k = new Kiebitz($('#scr-podium [data-kiebitz]'));
+    this.cv = $('#podium-cv'); this.ctx = this.cv.getContext('2d');
+    this.buf = document.createElement('canvas'); this.bctx = this.buf.getContext('2d');
+    $('#btn-continue').addEventListener('click', () => {
+      Sound.play('tap'); S.phase = 'race'; S.finishedAt = null; saveState();
+      Race.show(true); Race.k.say('Doch noch nicht genug? Na gut. Ich hatte eh nichts vor.');
+    });
+    $('#btn-revanche').addEventListener('click', () => { Sound.play('tap'); revanche(); });
+    $('#btn-newround').addEventListener('click', () => { Sound.play('tap'); confirmDialog('Neue Leute an den Tisch? Spieler und Sitzordnung werden neu festgelegt.', 'Neue Runde', 'Abbrechen', freshStart); });
+    let rt = null;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (S.phase === 'podium') this.layout(); }, 120); });
+  },
+  show(celebrate) {
+    showScreen('podium');
+    this.rank = ranking();
+    this.renderUrkunde();
+    this.layout();
+    this.conf = []; this.toms = []; this.splats = []; this.t0 = performance.now();
+    this.start();
+    const first = this.rank[0].p.name, last = this.rank[this.rank.length - 1].p.name;
+    this.k.say(fill(pick('pod', TXT.evaluate.podium), { first }));
+    this.k.say(fill(this.rank.length >= 4 ? TXT.evaluate.pranger : TXT.evaluate.fool, { last }), { queue: true });
+    if (celebrate) setTimeout(() => Sound.play('fanfare'), 250);
+  },
+  layout() {
+    const wrapW = this.cv.parentElement.clientWidth;
+    if (!wrapW) return;
+    const dpr = window.devicePixelRatio || 1;
+    const kCss = clamp(wrapW / 200, 1.6, 3.2);
+    this.scale = Math.max(1, Math.round(kCss * dpr));
+    this.W = Math.ceil(wrapW * dpr / this.scale);
+    this.H = 112;
+    this.buf.width = this.W; this.buf.height = this.H;
+    this.cv.width = this.W * this.scale; this.cv.height = this.H * this.scale;
+    this.cv.style.height = (this.H * this.scale / dpr) + 'px';
+    this.cv.style.width = (this.W * this.scale / dpr) + 'px';
+    this.cv.parentElement.style.overflow = 'hidden';
+  },
+  start() {
+    if (this.running) return;
+    this.running = true;
+    let last = 0;
+    const loop = now => {
+      if (!this.running) return;
+      requestAnimationFrame(loop);
+      if (now - last < 45) return;
+      last = now;
+      this.draw(now);
+    };
+    requestAnimationFrame(loop);
+  },
+  stop() { this.running = false; },
+  renderUrkunde() {
+    const st = stats();
+    const d = new Date(S.finishedAt || Date.now());
+    const date = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+    const el = $('#urkunde');
+    let h = '<h2>Urkunde</h2><div class="u-sub">Skatabend vom ' + esc(date) + ', ' + S.games.length + ' Spiele, reine Liste</div>';
+    h += '<div class="u-rank"><h3>Rangliste</h3>';
+    let place = 0, prev = null;
+    this.rank.forEach((r, i) => {
+      if (prev === null || r.s.score !== prev) place = i + 1;
+      prev = r.s.score;
+      h += '<div class="ur"><span class="pl">' + place + '.</span><span class="sp" data-sp="' + r.p.id + '"></span><span class="nm">' + esc(r.p.name) + '<small>' + esc(charName(r.p.char)) + '</small></span><span class="pt">' + fmtScore(r.s.score) + '</span></div>';
+    });
+    h += '</div>';
+    const hs = honors(st);
+    if (hs.length) {
+      h += '<div class="u-titles"><h3>Ehrentitel</h3>' + hs.map(t => '<div class="ut"><span class="tt">' + esc(t.title) + '</span><span class="tn">' + esc(t.name) + '</span><span class="tl">' + esc(t.line) + '</span></div>').join('') + '</div>';
+    }
+    h += '<div class="sig"><div><div class="sg">Prinz Naunin</div><small>Kreuz-Bube, Kiebitz und Zeremonienmeister</small></div><div class="seal" aria-hidden="true">&clubs;</div></div>';
+    el.innerHTML = h;
+    $$('[data-sp]', el).forEach(sp => { const p = playerById(sp.dataset.sp); sp.appendChild(spriteEl(spriteWalk(p.char, 0, st[p.id].score < 0), 2)); });
+  },
+  draw(now) {
+    const b = this.bctx, W = this.W, H = this.H;
+    if (!W) return;
+    const t = now - this.t0;
+    const pal = skyPalette(new Date());
+    const GY = H - 16;
+    const bandH = Math.ceil(GY / 5);
+    const bands = pal.bands.concat([pal.bands[3]]);
+    bands.forEach((c, i) => { b.fillStyle = c; b.fillRect(0, i * bandH, W, bandH); });
+    if (pal.stars) for (let i = 0; i < 40; i++) {
+      if ((i + Math.floor(now / 600)) % 8 === 0) continue;
+      b.fillStyle = i % 6 ? '#d8d4f0' : '#f5c542'; b.fillRect(Math.floor(hash2(i, 5) * W), Math.floor(hash2(i, 9) * (GY - 30)), 1, 1);
+    }
+    if (pal.moon) { b.fillStyle = '#f4ead2'; for (let y = -5; y <= 5; y++) for (let x = -5; x <= 5; x++) if (x * x + y * y <= 26 && (x - 3) * (x - 3) + (y + 1) * (y + 1) > 18) b.fillRect(18 + x, 12 + y, 1, 1); }
+    /* Burg groß */
+    const cx = Math.round(W / 2);
+    b.save(); b.translate(cx - 28, GY - 18); b.scale(2, 2);
+    Race.drawCastle(b, 0, 9, pal, now);
+    b.restore();
+    /* Wimpelketten */
+    const flags = ['#d63c3c', '#f5c542', '#2f8a4c', '#45425c', '#eea02c', '#2f4aa0'];
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 9; i++) {
+        const fx = cx + side * (34 + i * 8);
+        const fy = 18 + Math.round(Math.pow(i - 4, 2) * -0.4 + 6);
+        b.fillStyle = '#1b1427'; b.fillRect(fx, fy - 1, 8 * side, 1);
+        b.fillStyle = flags[i % flags.length];
+        b.fillRect(fx + (side < 0 ? -5 : 1), fy, 4, 2); b.fillRect(fx + (side < 0 ? -4 : 2), fy + 2, 2, 2);
+      }
+    }
+    /* Boden */
+    b.fillStyle = '#4f8a3a'; b.fillRect(0, GY, W, H - GY);
+    b.fillStyle = '#3c7a2c'; b.fillRect(0, GY, W, 1);
+    for (let x = 0; x < W; x += 3) if (hash2(x, 77) < 0.4) { b.fillStyle = '#3c7a2c'; b.fillRect(x, GY + 2 + Math.floor(hash2(x, 3) * 10), 1, 2); }
+    b.fillStyle = '#9c7646'; b.fillRect(cx - 50, GY + 6, 100, 6);
+    /* Podest */
+    const r = this.rank;
+    const blocks = [{ i: 1, x: cx - 27, h: 16 }, { i: 0, x: cx, h: 24 }, { i: 2, x: cx + 27, h: 10 }];
+    const n = r.length;
+    const lastIdx = n - 1;
+    const placed = [];
+    blocks.forEach(bl => {
+      if (bl.i >= n) return;
+      if (n >= 4 && bl.i === lastIdx) return;
+      const top = GY + 6 - bl.h;
+      b.fillStyle = '#1b1427'; b.fillRect(bl.x - 13, top - 1, 26, bl.h + 1);
+      b.fillStyle = '#8f8cab'; b.fillRect(bl.x - 12, top, 24, bl.h);
+      b.fillStyle = '#b4b2cc'; b.fillRect(bl.x - 12, top, 24, 2);
+      b.fillStyle = '#6a6788'; b.fillRect(bl.x - 12, top + bl.h - 2, 24, 2);
+      for (let yy = top + 5; yy < top + bl.h - 2; yy += 5) { b.fillStyle = '#7d7a9a'; b.fillRect(bl.x - 12, yy, 24, 1); }
+      drawNum(b, String(bl.i + 1), bl.x, top + 4, ['#f5c542', '#e0e4f0', '#d08a4a'][bl.i], '#1b1427');
+      placed.push({ rk: bl.i, x: bl.x, y: top });
+    });
+    /* Fußvolk */
+    let fv = 0;
+    for (let i = 3; i < n; i++) {
+      if (n >= 4 && i === lastIdx) continue;
+      placed.push({ rk: i, x: 14 + fv * 20, y: GY + 8, ground: true });
+      fv++;
+    }
+    /* Pranger */
+    let pr = null;
+    if (n >= 4) {
+      pr = { rk: lastIdx, x: W - 22, y: GY + 8 };
+      placed.push(pr);
+    }
+    placed.forEach(pl => {
+      const ent = r[pl.rk]; if (!ent) return;
+      const zombie = ent.s.score < 0;
+      let fr = 0, dy = 0;
+      if (pl.rk === 0) { const ph = Math.floor(t / 160) % 4; dy = ph === 1 ? -3 : ph === 2 ? -2 : 0; fr = ph % 2; }
+      else if (pl === pr) { fr = 0; }
+      else { fr = Math.floor((t + pl.rk * 300) / 420) % 2; dy = pl.ground && fr ? -1 : 0; }
+      const spr = spriteWalk(ent.p.char, fr, zombie);
+      const sx = Math.round(pl.x - spr.width / 2), sy = pl.y - spr.height + 1 + dy;
+      if (pl.rk === 0) {
+        const pulse = 0.4 + 0.4 * Math.sin(now / 250);
+        const sil = silhouette(spr, '#ffe070');
+        b.globalAlpha = pulse;
+        b.drawImage(sil, sx - 1, sy); b.drawImage(sil, sx + 1, sy); b.drawImage(sil, sx, sy - 1);
+        b.globalAlpha = 1;
+      }
+      b.drawImage(spr, sx, sy);
+      if (pl.rk === 0) this.drawCrown(b, pl.x, sy - 7 + Math.round(Math.sin(now / 300)), now);
+      if (pl.rk === 1 || pl.rk === 2) {
+        b.fillStyle = '#1b1427'; b.fillRect(pl.x - 2, sy + 14, 4, 4);
+        b.fillStyle = pl.rk === 1 ? '#e0e4f0' : '#d08a4a'; b.fillRect(pl.x - 1, sy + 15, 2, 2);
+      }
+      if (n === 3 && pl.rk === 2) this.drawJester(b, pl.x, sy, now);
+      if (pl === pr) { pr.sx = sx; pr.sy = sy; }
+    });
+    if (pr) this.drawPillory(b, pr, now);
+    /* Konfetti */
+    if (this.conf.length < 46 && Math.random() < 0.6) this.conf.push({ x: Math.random() * W, y: -2, vx: (Math.random() - 0.5) * 0.4, vy: 0.4 + Math.random() * 0.5, c: flags[Math.floor(Math.random() * flags.length)], ph: Math.random() * 6 });
+    this.conf.forEach(c => {
+      c.x += c.vx + Math.sin(now / 300 + c.ph) * 0.2; c.y += c.vy;
+      b.fillStyle = c.c;
+      b.fillRect(Math.round(c.x), Math.round(c.y), Math.floor(now / 200 + c.ph) % 2 ? 2 : 1, 1);
+    });
+    this.conf = this.conf.filter(c => c.y < H);
+    const ctx = this.ctx;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.buf, 0, 0, W * this.scale, H * this.scale);
+  },
+  drawCrown(b, x, y, now) {
+    b.fillStyle = '#1b1427'; b.fillRect(x - 5, y - 1, 11, 7);
+    b.fillStyle = '#f5c542';
+    b.fillRect(x - 4, y + 2, 9, 3);
+    b.fillRect(x - 4, y, 1, 2); b.fillRect(x, y - 1, 1, 3); b.fillRect(x + 4, y, 1, 2);
+    b.fillStyle = '#b9852a'; b.fillRect(x - 4, y + 4, 9, 1);
+    b.fillStyle = '#d8343f'; b.fillRect(x, y + 3, 1, 1);
+    b.fillStyle = '#2f8a4c'; b.fillRect(x - 3, y + 3, 1, 1); b.fillRect(x + 3, y + 3, 1, 1);
+    if (Math.floor(now / 220) % 3 === 0) { b.fillStyle = '#fff6c0'; b.fillRect(x + 6, y - 2, 1, 1); b.fillRect(x - 6, y + 1, 1, 1); }
+  },
+  drawJester(b, x, sy, now) {
+    const ph = Math.floor(now / 300) % 2;
+    b.fillStyle = '#1b1427'; b.fillRect(x - 7, sy - 1, 15, 5);
+    b.fillStyle = '#d63c3c'; b.fillRect(x - 6, sy, 6, 3); b.fillRect(x - 8, sy - 2 - ph, 2, 3);
+    b.fillStyle = '#2f8a4c'; b.fillRect(x, sy, 6, 3); b.fillRect(x + 6, sy - 2 + ph, 2, 3);
+    b.fillStyle = '#f5c542'; b.fillRect(x - 9, sy - 3 - ph, 2, 2); b.fillRect(x + 7, sy - 3 + ph, 2, 2);
+  },
+  drawPillory(b, pr, now) {
+    const x = pr.x, by = pr.sy + 13;
+    b.fillStyle = '#1b1427'; b.fillRect(x - 1, by, 4, pr.y - by);
+    b.fillStyle = '#8a5a34'; b.fillRect(x, by, 2, pr.y - by);
+    b.fillStyle = '#1b1427'; b.fillRect(x - 12, by - 1, 26, 6);
+    b.fillStyle = '#a8703e'; b.fillRect(x - 11, by, 24, 4);
+    b.fillStyle = '#6a4222'; b.fillRect(x - 11, by + 3, 24, 1);
+    b.fillStyle = '#f3c99b'; b.fillRect(x - 9, by + 1, 2, 2); b.fillRect(x + 9, by + 1, 2, 2);
+    /* Tomaten */
+    if (Math.random() < 0.035 && this.toms.length < 3) {
+      const fromLeft = Math.random() < 0.5;
+      this.toms.push({ x: fromLeft ? -2 : this.W + 2, y: 60 + Math.random() * 20, tx: x + (Math.random() * 10 - 5), ty: pr.sy + 4 + Math.random() * 10, t: 0 });
+    }
+    this.toms.forEach(tm => {
+      tm.t += 0.03;
+      const k = Math.min(1, tm.t);
+      const px = tm.x + (tm.tx - tm.x) * k, py = tm.y + (tm.ty - tm.y) * k - Math.sin(k * Math.PI) * 26;
+      b.fillStyle = '#d63c3c'; b.fillRect(Math.round(px), Math.round(py), 2, 2);
+      b.fillStyle = '#2f8a4c'; b.fillRect(Math.round(px), Math.round(py) - 1, 1, 1);
+      if (k >= 1) {
+        tm.done = true;
+        for (let j = 0; j < 4; j++) this.splats.push({ x: Math.round(tm.tx + (Math.random() * 6 - 3)), y: Math.round(tm.ty + (Math.random() * 4 - 2)) });
+        if (this.splats.length > 40) this.splats.splice(0, this.splats.length - 40);
+        if (this.splats.length < 16) Sound.play('splat');
+      }
+    });
+    this.toms = this.toms.filter(tm => !tm.done);
+    b.fillStyle = '#c8303a';
+    this.splats.forEach(s => b.fillRect(s.x, s.y, 1, 1));
+  }
+};
+
+/* ===== Start ===== */
+function showScreen(name) {
+  ['onb', 'race', 'podium'].forEach(s => { $('#scr-' + s).hidden = s !== name; });
+  if (name !== 'race') Race.stop();
+  if (name !== 'podium') Podium.stop();
+  window.scrollTo(0, 0);
+}
+(function boot() {
+  Onb.init(); Race.init(); Podium.init();
+  if (S.phase === 'race' && S.players.length >= 3 && S.players.every(p => p.char)) Race.show(false);
+  else if (S.phase === 'podium' && S.players.length >= 3) Podium.show(false);
+  else { S.phase = 'onboarding'; Onb.show(); }
+})();
+
+</script>

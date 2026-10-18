@@ -1,0 +1,7 @@
+dist/
+dev/test.html
+dev/*.png
+dev/icons/
+node_modules/
+__pycache__/
+.DS_Store

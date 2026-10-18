@@ -1,0 +1,17 @@
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    pg = b.new_page(viewport={'width':777,'height':930}, device_scale_factor=2)
+    errs=[]; pg.on('pageerror', lambda e: errs.append('PAGEERR '+str(e)))
+    pg.goto('file:///home/claude/skat/dev/test.html')
+    pg.evaluate("localStorage.clear()"); pg.reload(); pg.wait_for_timeout(400)
+    pg.click('#intro-start')
+    while pg.evaluate('performance.now()-Stage.t0') < 5500: pg.wait_for_timeout(30)
+    pg.screenshot(path='o_anim.png')
+    print('skip visible during anim:', pg.is_visible('#intro-skip'))
+    while pg.evaluate('performance.now()-Stage.t0') < 9700: pg.wait_for_timeout(30)
+    print('skip visible at wand:', pg.is_visible('#intro-skip'))
+    pg.wait_for_timeout(2500)
+    pg.screenshot(path='o_hello.png')
+    print('skip visible at hello:', pg.is_visible('#intro-skip'), errs)
+    b.close()
