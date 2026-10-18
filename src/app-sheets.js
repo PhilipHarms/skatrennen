@@ -97,7 +97,11 @@ function openSettings() {
     b.textContent = k === 'kiebitz' ? (on ? 'Redet' : 'Maulkorb') : (on ? 'An' : 'Aus');
     Race.updateToggles(); Race.k.refresh(); Race.updateUI(); Sound.play('tap');
   }));
-  $('[data-a=intro]', w).addEventListener('click', () => { Sound.play('tap'); Layer.close(); Intro.show({ replay: true }); });
+  $('[data-a=intro]', w).addEventListener('click', () => {
+    Sound.play('tap');
+    if (!S.players.length && !S.games.length) { Layer.close(); introRestart(); return; }
+    confirmDialog('Intro noch mal ansehen? Dann geht alles von vorn los: Spieler, Sitzordnung und Punkte werden zur\u00fcckgesetzt.', 'Von vorn', 'Abbrechen', introRestart, { danger: true });
+  });
   $('[data-a=revanche]', w).addEventListener('click', () => confirmDialog('Neues Spiel mit denselben Leuten? Die Punkte von jetzt verschwinden.', 'Neu anfangen', 'Abbrechen', revanche, { danger: true }));
   $('[data-a=fresh]', w).addEventListener('click', () => confirmDialog('Ganz neu anfangen? Spieler, Sitzordnung und Punkte werden zurückgesetzt.', 'Zurücksetzen', 'Abbrechen', freshStart, { danger: true }));
 }
@@ -126,6 +130,15 @@ function revanche() {
   Race.show(true);
   Race.k.say('Revanche! Alle wieder auf null. Ich mag Wiederholungen, da weiß ich schon, wer verliert.');
 }
+/* Frischer Start mit Intro: nur die Hausregeln bleiben */
+function introRestart() {
+  const settings = S.settings;
+  S = newState();
+  S.settings = settings;
+  saveState();
+  Intro.show();
+}
+
 function freshStart() {
   const old = S.players.slice();
   const settings = S.settings;

@@ -110,12 +110,8 @@ with sync_playwright() as p:
     # 5. Revanche, dann Neue Leute, dann Intro-Wiederholung
     pg.click('#btn-revanche'); pg.wait_for_timeout(600)
     log('5 Revanche:', screen(pg), 'Spiele', pg.evaluate('S.games.length'))
-    pg.click('#btn-settings'); pg.wait_for_timeout(200); pg.click('[data-a=intro]'); pg.wait_for_timeout(300)
-    pg.click('#intro-start'); pg.wait_for_timeout(500); pg.click('#intro-skip'); pg.wait_for_timeout(300)
-    log('  Intro-Wiederholung zurück:', screen(pg))
     pg.click('#btn-settings'); pg.wait_for_timeout(200); pg.click('[data-a=fresh]'); pg.wait_for_timeout(150); pg.click('.modal [data-a=ok]'); pg.wait_for_timeout(1500)
     log('  Neue Leute:', screen(pg), pg.evaluate('Intro.step'), 'Namen:', pg.evaluate("S.draft.slots.map(s=>s.name).join(',')"))
-
     # 6. Gestrige Siegerehrung -> Dieselben Leute?
     s = json.loads(pg.evaluate("localStorage.getItem('naunin-skatrennen-v1')"))
     s['phase'] = 'podium'; s['finishedAt'] = 1760700000000
@@ -125,6 +121,18 @@ with sync_playwright() as p:
     pg.click('[data-a=yes]'); t0 = time.time()
     pg.wait_for_function("!document.getElementById('scr-race').hidden", timeout=10000)
     log('  Gleiche Runde -> Rennbahn nach', round(time.time() - t0, 1), 's')
+
+    # 7. Intro-Knopf: frischer Start
+    pg.wait_for_timeout(2500)
+    log('7 Runde:', screen(pg), pg.evaluate("S.players.map(p=>p.name).join(',')"))
+    pg.click('#btn-enter'); pg.wait_for_timeout(150); pg.click('#entry-body [data-k=player] >> nth=0'); pg.fill('#fp', '48'); pg.click('#entry-ok'); pg.wait_for_timeout(800)
+    pg.evaluate("S.settings.pferd = 150; saveState()")
+    pg.click('#btn-settings'); pg.wait_for_timeout(200); pg.click('[data-a=intro]'); pg.wait_for_timeout(300)
+    log('  Intro-Knopf fragt nach:', pg.inner_text('.modal p')[:60])
+    pg.click('.modal [data-a=ok]'); pg.wait_for_timeout(600)
+    log('  Danach:', screen(pg), '| Startknopf:', pg.is_visible('#intro-start'), '| Spieler:', pg.evaluate('S.players.length'), '| Spiele:', pg.evaluate('S.games.length'), '| Namen:', repr(pg.evaluate("S.draft.slots.map(s=>s.name).join(',')")), '| Pferd ab:', pg.evaluate('S.settings.pferd'))
+    pg.click('#intro-start'); pg.wait_for_timeout(500); pg.click('#intro-skip'); pg.wait_for_timeout(2500)
+    log('  Intro übersprungen:', pg.evaluate('Intro.step'))
 
     log('Fehler:', errs)
     b.close()
