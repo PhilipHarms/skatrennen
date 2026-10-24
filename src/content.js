@@ -84,7 +84,7 @@ const TXT = {
     ]
   },
   /* Andere Schreibweisen, die denselben Spruch bekommen */
-  nameAlias: { matti: 'matteo' },
+  nameAlias: { matti: 'matteo', 'philip harms': 'philip', 'philip naunin': 'naunin', philipp: 'zauni' },
   namesWarn: {
     few: 'Drei. Mindestens drei. Ich kann ja nicht mitspielen, so gern ich würde.',
     dup: 'Zwei Leute mit demselben Namen? Gebt euch Spitznamen. Gemeine, bitte.'

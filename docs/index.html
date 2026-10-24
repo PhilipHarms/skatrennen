@@ -2862,7 +2862,7 @@ const TXT = {
     ]
   },
   /* Andere Schreibweisen, die denselben Spruch bekommen */
-  nameAlias: { matti: 'matteo' },
+  nameAlias: { matti: 'matteo', 'philip harms': 'philip', 'philip naunin': 'naunin', philipp: 'zauni' },
   namesWarn: {
     few: 'Drei. Mindestens drei. Ich kann ja nicht mitspielen, so gern ich würde.',
     dup: 'Zwei Leute mit demselben Namen? Gebt euch Spitznamen. Gemeine, bitte.'
@@ -4354,7 +4354,7 @@ const Intro = {
 };
 
 function jokeKeyOf(name) {
-  const k = (name || '').trim().toLowerCase();
+  const k = (name || '').trim().replace(/\s+/g, ' ').toLowerCase();
   if (TXT.nameJokes[k]) return k;
   return TXT.nameAlias[k] || null;
 }

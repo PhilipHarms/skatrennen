@@ -1028,7 +1028,7 @@ const Intro = {
 };
 
 function jokeKeyOf(name) {
-  const k = (name || '').trim().toLowerCase();
+  const k = (name || '').trim().replace(/\s+/g, ' ').toLowerCase();
   if (TXT.nameJokes[k]) return k;
   return TXT.nameAlias[k] || null;
 }
