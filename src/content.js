@@ -50,7 +50,8 @@ const TXT = {
       'Hey, warum wird mein Depot pl\u00f6tzlich rot?'
     ],
     fritz: [
-      'Ah, ein Meyer!'
+      'Ah, ein Meyer!',
+      'Her mit dem Fernet!'
     ],
     jonathan: [
       'Jonathan! Ein biblischer Name. Beten hilft beim Skat aber auch nicht.',
